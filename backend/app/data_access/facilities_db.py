@@ -1,18 +1,19 @@
-"""Accredited facilities lookup backed by a CSV directory."""
+"""Facilities lookup. DB-backed (with the CSV used as one-time seed during init_db)."""
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from functools import lru_cache
-from pathlib import Path
+from dataclasses import asdict, dataclass
 
-import pandas as pd
 from rapidfuzz import fuzz
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from app.config import settings
+from app.db.base import session_scope
+from app.db.models import Facility
 
 
 @dataclass
 class FacilityMatch:
+    id: int
     name: str
     type: str
     region: str
@@ -28,44 +29,52 @@ class FacilityMatch:
         return asdict(self)
 
 
-def _yes(value: object) -> bool:
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in {"yes", "true", "1", "y"}
-
-
-def _split_services(value: object) -> list[str]:
-    if value is None or (isinstance(value, float) and pd.isna(value)):
+def _split_services(value: str | None) -> list[str]:
+    if not value:
         return []
     return [v.strip() for v in str(value).split(";") if v.strip()]
 
 
-@lru_cache(maxsize=1)
-def _load_dataframe() -> pd.DataFrame:
-    path = Path(settings.facilities_csv)
-    if not path.exists():
-        raise FileNotFoundError(f"Facilities CSV not found at {path}")
-    df = pd.read_csv(path)
-    required = {"name", "type", "region", "accredited"}
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"Facilities CSV missing columns: {missing}")
-    return df
-
-
-def _row_to_match(row: pd.Series, score: float) -> FacilityMatch:
+def _row_to_match(row: Facility, score: float) -> FacilityMatch:
     return FacilityMatch(
-        name=str(row.get("name", "")),
-        type=str(row.get("type", "")),
-        region=str(row.get("region", "")),
-        district=str(row.get("district", "")),
-        town=str(row.get("town", "")),
-        accredited=_yes(row.get("accredited")),
-        accreditation_status=str(row.get("accreditation_status", "")),
-        services=_split_services(row.get("services")),
-        phone=str(row.get("phone", "")),
+        id=row.id,
+        name=row.name or "",
+        type=row.type or "",
+        region=row.region or "",
+        district=row.district or "",
+        town=row.town or "",
+        accredited=bool(row.accredited),
+        accreditation_status=row.accreditation_status or "",
+        services=_split_services(row.services),
+        phone=row.phone or "",
         score=score,
     )
+
+
+def _search(
+    db: Session,
+    query: str,
+    region: str | None,
+    limit: int,
+    min_score: float,
+) -> list[FacilityMatch]:
+    query = query.strip()
+    if not query:
+        return []
+    stmt = select(Facility)
+    if region:
+        stmt = stmt.where(Facility.region.ilike(region.strip()))
+    rows = db.execute(stmt).scalars().all()
+
+    candidates: list[tuple[Facility, float]] = []
+    for row in rows:
+        haystacks = [row.name or "", row.town or "", row.district or ""]
+        best = max((fuzz.WRatio(query, h) for h in haystacks if h), default=0)
+        if best >= min_score:
+            candidates.append((row, float(best)))
+
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    return [_row_to_match(row, score) for row, score in candidates[:limit]]
 
 
 def search_facility(
@@ -74,33 +83,15 @@ def search_facility(
     limit: int = 5,
     min_score: float = 65.0,
 ) -> list[FacilityMatch]:
-    df = _load_dataframe()
-    if df.empty or not query.strip():
-        return []
-
-    if region:
-        df = df[df["region"].str.lower() == region.strip().lower()]
-
-    candidates: list[tuple[int, float]] = []
-    for idx, row in df.iterrows():
-        haystacks = [
-            str(row.get("name", "")),
-            str(row.get("town", "")),
-            str(row.get("district", "")),
-        ]
-        best = max((fuzz.WRatio(query, h) for h in haystacks if h), default=0)
-        if best >= min_score:
-            candidates.append((idx, float(best)))
-
-    candidates.sort(key=lambda x: x[1], reverse=True)
-    return [_row_to_match(df.loc[idx], score) for idx, score in candidates[:limit]]
+    with session_scope() as db:
+        return _search(db, query, region, limit, min_score)
 
 
-def list_facilities_by_region(region: str) -> list[dict]:
-    df = _load_dataframe()
-    filtered = df[df["region"].str.lower() == region.strip().lower()]
-    return filtered.to_dict(orient="records")
-
-
-def reload_cache() -> None:
-    _load_dataframe.cache_clear()
+def search_facility_with_session(
+    db: Session,
+    query: str,
+    region: str | None = None,
+    limit: int = 5,
+    min_score: float = 65.0,
+) -> list[FacilityMatch]:
+    return _search(db, query, region, limit, min_score)

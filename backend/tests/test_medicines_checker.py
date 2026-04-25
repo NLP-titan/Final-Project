@@ -1,9 +1,10 @@
+"""Medicines checker tool — DB-backed."""
 from app.agent.tools.medicines_checker import medicines_checker_tool
 
 
 def test_paracetamol_is_covered():
     out = medicines_checker_tool.run({"name": "paracetamol"})
-    assert "matches" in out and out["matches"], out
+    assert out["matches"], out
     assert out["matches"][0]["covered"] is True
     assert "NHIS Medicines List" in out["summary"]
 

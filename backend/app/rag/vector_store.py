@@ -1,4 +1,9 @@
-"""ChromaDB-backed vector store for policy chunks."""
+"""ChromaDB-backed vector store for policy chunks.
+
+ChromaDB and the embedder are imported lazily so simply importing this module never triggers
+the heavy dependency stack (useful for unit tests and for endpoints like /health that only
+*conditionally* care about the vector store).
+"""
 from __future__ import annotations
 
 import hashlib
@@ -6,12 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-
 from app.config import settings
 from app.rag.chunker import Chunk
-from app.rag.embedder import embed_query, embed_texts
 
 
 @dataclass
@@ -23,6 +24,9 @@ class RetrievedChunk:
 
 class PolicyVectorStore:
     def __init__(self, persist_dir: str | None = None, collection_name: str | None = None):
+        import chromadb
+        from chromadb.config import Settings as ChromaSettings
+
         persist_dir = persist_dir or settings.chroma_persist_dir
         Path(persist_dir).mkdir(parents=True, exist_ok=True)
         self._client = chromadb.PersistentClient(
@@ -51,6 +55,8 @@ class PolicyVectorStore:
         )
 
     def add(self, chunks: Sequence[Chunk]) -> int:
+        from app.rag.embedder import embed_texts
+
         if not chunks:
             return 0
         ids = [self._chunk_id(c, i) for i, c in enumerate(chunks)]
@@ -84,6 +90,8 @@ class PolicyVectorStore:
         k: int = 4,
         category: str | None = None,
     ) -> list[RetrievedChunk]:
+        from app.rag.embedder import embed_query
+
         where = {"category": category} if category else None
         result = self._collection.query(
             query_embeddings=[embed_query(query_text)],

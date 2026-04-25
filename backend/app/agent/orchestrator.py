@@ -1,30 +1,39 @@
-"""ReAct-style orchestrator.
+"""ReAct-style orchestrator with multi-turn history, retries, and a heuristic fallback.
 
 Two execution paths:
   - LLM path (Anthropic or OpenAI). The LLM picks tools via native tool-calling, the
     orchestrator runs them, feeds the results back, and iterates until the model produces a
     final natural-language answer.
-  - Heuristic fallback (no API key configured). A small keyword router calls the most
-    appropriate tool and renders a deterministic answer. This keeps the backend usable for
-    development and for frontend integration without an LLM key.
+  - Heuristic fallback (no API key configured, or LLM failure). A keyword router calls the
+    most appropriate tool and renders a deterministic answer.
 
-The interface returned to callers is the same in both cases:
-    {
-        "answer": str,
-        "tool_calls": [ {"name": str, "input": dict, "output": dict}, ... ],
-        "provider": "anthropic" | "openai" | "heuristic",
-    }
+Multi-turn:
+  - `history` is a list of `{"role": "user"|"assistant", "content": str}` from earlier turns.
+  - The LLM path replays history before the current question; the heuristic path uses only the
+    current question (history doesn't help keyword routing).
+
+Retries:
+  - LLM API calls are wrapped with exponential backoff.
+  - Tool execution failures are surfaced back to the model so it can recover within the same
+    turn (no retry needed at the orchestrator level).
 """
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Sequence
 
 from app.agent.prompts import SYSTEM_PROMPT
 from app.agent.tools import TOOL_REGISTRY, get_tool_specs, run_tool
 from app.config import settings
+from app.utils.retry import retry_call
+
+
+log = logging.getLogger(__name__)
+MAX_TOOL_ITERATIONS = 4
+MAX_HISTORY_TURNS = 10  # cap to keep prompts bounded
 
 
 @dataclass
@@ -32,54 +41,67 @@ class AgentResponse:
     answer: str
     tool_calls: list[dict] = field(default_factory=list)
     provider: str = "heuristic"
+    fallback_reason: str | None = None
 
     def to_dict(self) -> dict:
         return {
             "answer": self.answer,
             "tool_calls": self.tool_calls,
             "provider": self.provider,
+            "fallback_reason": self.fallback_reason,
         }
 
 
-MAX_TOOL_ITERATIONS = 4
-
-
-def answer(question: str) -> AgentResponse:
+def answer(question: str, history: Sequence[dict] | None = None) -> AgentResponse:
     question = (question or "").strip()
     if not question:
         return AgentResponse(answer="Please ask a question about NHIS.")
 
+    history = list(history or [])[-MAX_HISTORY_TURNS * 2 :]
+
     provider = settings.llm_provider.lower()
     if provider == "anthropic" and settings.anthropic_api_key:
         try:
-            return _run_anthropic(question)
+            return _run_anthropic(question, history)
         except Exception as exc:
-            return _heuristic(question, note=f"(Anthropic error: {exc}; using fallback)")
+            log.exception("Anthropic agent failed; falling back to heuristic")
+            return _heuristic(question, fallback_reason=f"anthropic_error: {exc}")
     if provider == "openai" and settings.openai_api_key:
         try:
-            return _run_openai(question)
+            return _run_openai(question, history)
         except Exception as exc:
-            return _heuristic(question, note=f"(OpenAI error: {exc}; using fallback)")
+            log.exception("OpenAI agent failed; falling back to heuristic")
+            return _heuristic(question, fallback_reason=f"openai_error: {exc}")
     return _heuristic(question)
 
 
 # ---------------------------------------------------------------------------
 # Anthropic path
 # ---------------------------------------------------------------------------
-def _run_anthropic(question: str) -> AgentResponse:
+def _run_anthropic(question: str, history: list[dict]) -> AgentResponse:
     from anthropic import Anthropic
 
     client = Anthropic(api_key=settings.anthropic_api_key)
-    messages: list[dict] = [{"role": "user", "content": question}]
+    messages: list[dict] = [
+        {"role": h["role"], "content": h["content"]}
+        for h in history
+        if h.get("role") in {"user", "assistant"} and h.get("content")
+    ]
+    messages.append({"role": "user", "content": question})
+
     tool_calls: list[dict] = []
 
     for _ in range(MAX_TOOL_ITERATIONS):
-        resp = client.messages.create(
-            model=settings.anthropic_model,
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            tools=get_tool_specs(),
-            messages=messages,
+        resp = retry_call(
+            lambda: client.messages.create(
+                model=settings.anthropic_model,
+                max_tokens=1024,
+                system=SYSTEM_PROMPT,
+                tools=get_tool_specs(),
+                messages=messages,
+            ),
+            attempts=3,
+            description="anthropic.messages.create",
         )
 
         if resp.stop_reason == "tool_use":
@@ -122,36 +144,40 @@ def _run_anthropic(question: str) -> AgentResponse:
 # OpenAI path
 # ---------------------------------------------------------------------------
 def _openai_tool_specs() -> list[dict]:
-    out = []
-    for spec in get_tool_specs():
-        out.append(
-            {
-                "type": "function",
-                "function": {
-                    "name": spec["name"],
-                    "description": spec["description"],
-                    "parameters": spec["input_schema"],
-                },
-            }
-        )
-    return out
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": spec["name"],
+                "description": spec["description"],
+                "parameters": spec["input_schema"],
+            },
+        }
+        for spec in get_tool_specs()
+    ]
 
 
-def _run_openai(question: str) -> AgentResponse:
+def _run_openai(question: str, history: list[dict]) -> AgentResponse:
     from openai import OpenAI
 
     client = OpenAI(api_key=settings.openai_api_key)
-    messages: list[dict[str, Any]] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": question},
-    ]
+    messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for h in history:
+        if h.get("role") in {"user", "assistant"} and h.get("content"):
+            messages.append({"role": h["role"], "content": h["content"]})
+    messages.append({"role": "user", "content": question})
+
     tool_calls_log: list[dict] = []
 
     for _ in range(MAX_TOOL_ITERATIONS):
-        resp = client.chat.completions.create(
-            model=settings.openai_model,
-            messages=messages,
-            tools=_openai_tool_specs(),
+        resp = retry_call(
+            lambda: client.chat.completions.create(
+                model=settings.openai_model,
+                messages=messages,
+                tools=_openai_tool_specs(),
+            ),
+            attempts=3,
+            description="openai.chat.completions.create",
         )
         msg = resp.choices[0].message
         if msg.tool_calls:
@@ -182,6 +208,7 @@ def _run_openai(question: str) -> AgentResponse:
             tool_calls=tool_calls_log,
             provider="openai",
         )
+
     return AgentResponse(
         answer="The agent could not converge on an answer within the iteration budget.",
         tool_calls=tool_calls_log,
@@ -211,11 +238,26 @@ FACILITY_HINTS = (
     "facility",
     "accredited",
 )
-ENROLLMENT_HINTS = ("renew", "register", "enrol", "enroll", "card expired", "premium", "ghana card")
-DISPUTE_HINTS = ("turned away", "denied", "complaint", "refused", "charged me", "rights")
+ENROLLMENT_HINTS = (
+    "renew",
+    "register",
+    "enrol",
+    "enroll",
+    "card expired",
+    "premium",
+    "ghana card",
+)
+DISPUTE_HINTS = (
+    "turned away",
+    "denied",
+    "complaint",
+    "refused",
+    "charged me",
+    "rights",
+)
 
 
-def _heuristic(question: str, note: str | None = None) -> AgentResponse:
+def _heuristic(question: str, fallback_reason: str | None = None) -> AgentResponse:
     q = question.lower()
     tool_calls: list[dict] = []
 
@@ -226,7 +268,11 @@ def _heuristic(question: str, note: str | None = None) -> AgentResponse:
             tool_calls.append(
                 {"name": "medicines_checker", "input": {"name": candidate}, "output": output}
             )
-            return _wrap_heuristic(output.get("summary", "No formulary match."), tool_calls, note)
+            return _wrap_heuristic(
+                output.get("summary", "No formulary match."),
+                tool_calls,
+                fallback_reason,
+            )
 
     if any(h in q for h in FACILITY_HINTS):
         candidate = _extract_likely_name(question, FACILITY_HINTS)
@@ -235,7 +281,11 @@ def _heuristic(question: str, note: str | None = None) -> AgentResponse:
             tool_calls.append(
                 {"name": "facility_checker", "input": {"name": candidate}, "output": output}
             )
-            return _wrap_heuristic(output.get("summary", "No facility match."), tool_calls, note)
+            return _wrap_heuristic(
+                output.get("summary", "No facility match."),
+                tool_calls,
+                fallback_reason,
+            )
 
     category = None
     if any(h in q for h in ENROLLMENT_HINTS):
@@ -243,7 +293,9 @@ def _heuristic(question: str, note: str | None = None) -> AgentResponse:
     elif any(h in q for h in DISPUTE_HINTS):
         category = "disputes"
 
-    output = run_tool("policy_retriever", {"query": question, "category": category, "k": 4})
+    output = run_tool(
+        "policy_retriever", {"query": question, "category": category, "k": 4}
+    )
     tool_calls.append(
         {
             "name": "policy_retriever",
@@ -258,30 +310,30 @@ def _heuristic(question: str, note: str | None = None) -> AgentResponse:
             "I couldn't find a clear answer in the knowledge base. Please call the NHIA "
             "Call Centre or visit your nearest NHIS district office for a definitive answer.",
             tool_calls,
-            note,
+            fallback_reason,
         )
     top = chunks[0]
-    answer = (
+    answer_text = (
         f"Based on the NHIS knowledge base ({top.get('source_file')}):\n\n"
         f"{top['text']}\n\n"
-        f"For complex or contested cases, contact the NHIA Call Centre or your district "
+        "For complex or contested cases, contact the NHIA Call Centre or your district "
         "NHIS office."
     )
-    return _wrap_heuristic(answer, tool_calls, note)
+    return _wrap_heuristic(answer_text, tool_calls, fallback_reason)
 
 
-def _wrap_heuristic(text: str, calls: list[dict], note: str | None) -> AgentResponse:
-    if note:
-        text = f"{text}\n\n_{note}_"
-    return AgentResponse(answer=text, tool_calls=calls, provider="heuristic")
+def _wrap_heuristic(
+    text: str, calls: list[dict], fallback_reason: str | None
+) -> AgentResponse:
+    return AgentResponse(
+        answer=text,
+        tool_calls=calls,
+        provider="heuristic",
+        fallback_reason=fallback_reason,
+    )
 
 
 def _extract_likely_name(question: str, hints: tuple[str, ...]) -> str | None:
-    """Best-effort extraction of a noun phrase the user is asking about.
-
-    Tries quoted strings first, then capitalised words after a hint keyword. Falls back to
-    the longest capitalised run in the sentence.
-    """
     quoted = re.search(r'["\']([^"\']{2,60})["\']', question)
     if quoted:
         return quoted.group(1).strip()
@@ -291,10 +343,14 @@ def _extract_likely_name(question: str, hints: tuple[str, ...]) -> str | None:
         idx = lowered.find(hint)
         if idx == -1:
             continue
-        tail = question[idx + len(hint):]
-        m = re.search(r"([A-Z][A-Za-z][\w\-]*(?:\s+[A-Z][A-Za-z][\w\-]*){0,4})", tail)
+        tail = question[idx + len(hint) :]
+        m = re.search(
+            r"([A-Z][A-Za-z][\w\-]*(?:\s+[A-Z][A-Za-z][\w\-]*){0,4})", tail
+        )
         if m:
             return m.group(1).strip()
 
-    caps = re.findall(r"\b[A-Z][A-Za-z][\w\-]*(?:\s+[A-Z][A-Za-z][\w\-]*){0,4}\b", question)
+    caps = re.findall(
+        r"\b[A-Z][A-Za-z][\w\-]*(?:\s+[A-Z][A-Za-z][\w\-]*){0,4}\b", question
+    )
     return max(caps, key=len) if caps else None

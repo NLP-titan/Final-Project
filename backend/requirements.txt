@@ -1,9 +1,15 @@
 # Core
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
-pydantic==2.9.2
+pydantic[email]==2.9.2
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
+python-multipart==0.0.12
+
+# DB + auth
+SQLAlchemy==2.0.35
+bcrypt==4.2.0
+PyJWT==2.9.0
 
 # RAG
 chromadb==0.5.5
@@ -14,7 +20,7 @@ pypdf==5.0.1
 pandas==2.2.3
 rapidfuzz==3.10.0
 
-# LLM clients (pick what you use; both are optional)
+# LLM clients (optional — backend runs without them via heuristic fallback)
 anthropic==0.39.0
 openai==1.51.2
 

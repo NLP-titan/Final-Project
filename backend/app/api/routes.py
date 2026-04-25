@@ -1,45 +1,30 @@
+"""Direct tool invocation + health endpoints.
+
+The full chat endpoint and persistent conversation history live in
+`app.api.conversations_router`. This router stays thin so frontend devs and the eval script
+can call the underlying tools without going through the agent.
+"""
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.agent.orchestrator import answer
 from app.agent.tools import TOOL_REGISTRY, run_tool
+from app.auth.dependencies import require_admin
 from app.config import settings
+from app.db.base import get_engine
+from app.db.models import User
 from app.rag.vector_store import get_default_store
 
 
 router = APIRouter()
 
 
-class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=2000)
-
-
-class ChatResponse(BaseModel):
-    answer: str
-    tool_calls: list[dict]
-    provider: str
-
-
-@router.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest) -> ChatResponse:
-    result = answer(req.message)
-    return ChatResponse(**result.to_dict())
-
-
 class ToolCallRequest(BaseModel):
     name: str
     arguments: dict[str, Any] = Field(default_factory=dict)
-
-
-@router.post("/tools/call")
-def call_tool(req: ToolCallRequest) -> dict:
-    if req.name not in TOOL_REGISTRY:
-        raise HTTPException(status_code=404, detail=f"Unknown tool: {req.name}")
-    return run_tool(req.name, req.arguments)
 
 
 @router.get("/tools")
@@ -56,15 +41,40 @@ def list_tools() -> dict:
     }
 
 
+@router.post("/tools/call", dependencies=[Depends(require_admin)])
+def call_tool(req: ToolCallRequest, _: User = Depends(require_admin)) -> dict:
+    """Direct tool invocation — admin only because it bypasses the agent's safety prompts."""
+    if req.name not in TOOL_REGISTRY:
+        raise HTTPException(status_code=404, detail=f"Unknown tool: {req.name}")
+    return run_tool(req.name, req.arguments)
+
+
 @router.get("/health")
 def health() -> dict:
-    try:
-        store_count = get_default_store().count()
-    except Exception as exc:
-        store_count = f"error: {exc}"
-    return {
+    info: dict[str, Any] = {
         "status": "ok",
         "llm_provider": settings.llm_provider,
-        "vector_store_chunks": store_count,
         "embedding_model": settings.embedding_model,
+    }
+    try:
+        info["vector_store_chunks"] = get_default_store().count()
+    except Exception as exc:
+        info["vector_store_chunks"] = f"error: {exc}"
+    try:
+        engine = get_engine()
+        with engine.connect() as conn:
+            conn.exec_driver_sql("SELECT 1")
+        info["database"] = "ok"
+    except Exception as exc:
+        info["database"] = f"error: {exc}"
+    return info
+
+
+@router.get("/")
+def root() -> dict:
+    return {
+        "service": "NHIS Assistant Backend",
+        "version": "0.2.0",
+        "docs": "/docs",
+        "health": "/api/health",
     }
