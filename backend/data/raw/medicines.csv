@@ -1,0 +1,21 @@
+name,generic_name,strength,form,therapeutic_class,covered,level_of_care,notes
+Paracetamol,paracetamol,500mg,tablet,analgesic,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Standard pain/fever relief.
+Amoxicillin,amoxicillin,250mg,capsule,antibiotic,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",First-line for many bacterial infections.
+Artemether-Lumefantrine,artemether/lumefantrine,20/120mg,tablet,antimalarial,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",First-line uncomplicated malaria.
+Metformin,metformin,500mg,tablet,antidiabetic,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",First-line type 2 diabetes.
+Amlodipine,amlodipine,5mg,tablet,antihypertensive,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",For hypertension.
+Lisinopril,lisinopril,10mg,tablet,antihypertensive,yes,"District Hospital;Regional Hospital;Teaching Hospital",ACE inhibitor for hypertension and heart failure.
+Salbutamol Inhaler,salbutamol,100mcg/dose,inhaler,bronchodilator,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",For asthma rescue.
+Oral Rehydration Salts,ors,low-osmolarity,sachet,electrolyte,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",For dehydration in diarrhoea.
+Zinc Sulphate,zinc sulphate,20mg,tablet,nutritional,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Adjunct in childhood diarrhoea.
+Ferrous Sulphate,ferrous sulphate,200mg,tablet,haematinic,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Iron supplementation.
+Folic Acid,folic acid,5mg,tablet,vitamin,yes,"CHPS;Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Antenatal supplementation.
+Magnesium Sulphate,magnesium sulphate,50%,injection,obstetric,yes,"District Hospital;Regional Hospital;Teaching Hospital",Eclampsia/pre-eclampsia management.
+Oxytocin,oxytocin,10IU/ml,injection,obstetric,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Active management of third stage of labour.
+Tenofovir/Lamivudine/Dolutegravir,TLD,300/300/50mg,tablet,antiretroviral,no,"Regional Hospital;Teaching Hospital",Provided through Global Fund/NACP — not via NHIS reimbursement.
+Insulin (Soluble),insulin,100IU/ml,injection,antidiabetic,yes,"District Hospital;Regional Hospital;Teaching Hospital",For insulin-requiring diabetes.
+Ceftriaxone,ceftriaxone,1g,injection,antibiotic,yes,"District Hospital;Regional Hospital;Teaching Hospital",Broad-spectrum cephalosporin.
+Diazepam,diazepam,5mg/ml,injection,anticonvulsant,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",For seizures.
+Misoprostol,misoprostol,200mcg,tablet,obstetric,yes,"Health Centre;District Hospital;Regional Hospital;Teaching Hospital",Postpartum haemorrhage prevention.
+Erythropoietin,epoetin alfa,4000IU,injection,haematology,no,"Teaching Hospital",Generally not covered for chronic dialysis support.
+Imatinib,imatinib,400mg,tablet,oncology,no,"Teaching Hospital",Not on NHIS medicines list — patient pays out of pocket or via special programmes.

@@ -1,0 +1,31 @@
+name,type,region,district,town,accredited,accreditation_status,services,phone
+Korle Bu Teaching Hospital,Teaching Hospital,Greater Accra,Ablekuma South,Accra,yes,Active,"OPD;IPD;Surgery;Maternity;Dialysis;Oncology",+233-302-739506
+Komfo Anokye Teaching Hospital,Teaching Hospital,Ashanti,Kumasi Metropolitan,Kumasi,yes,Active,"OPD;IPD;Surgery;Maternity;Dialysis;Oncology",+233-322-022301
+37 Military Hospital,Military Hospital,Greater Accra,Ayawaso West,Accra,yes,Active,"OPD;IPD;Surgery;Maternity",+233-302-776111
+Tamale Teaching Hospital,Teaching Hospital,Northern,Tamale Metropolitan,Tamale,yes,Active,"OPD;IPD;Surgery;Maternity",+233-372-022454
+Cape Coast Teaching Hospital,Teaching Hospital,Central,Cape Coast Metropolitan,Cape Coast,yes,Active,"OPD;IPD;Surgery;Maternity",+233-332-132401
+Ho Teaching Hospital,Teaching Hospital,Volta,Ho Municipal,Ho,yes,Active,"OPD;IPD;Surgery;Maternity",+233-362-026373
+Ridge Hospital,Regional Hospital,Greater Accra,Ayawaso East,Accra,yes,Active,"OPD;IPD;Surgery;Maternity",+233-302-228382
+La General Hospital,District Hospital,Greater Accra,La Dade-Kotopon,La,yes,Active,"OPD;IPD;Maternity",+233-302-770312
+Tema General Hospital,Regional Hospital,Greater Accra,Tema Metropolitan,Tema,yes,Active,"OPD;IPD;Surgery;Maternity",+233-303-202703
+Achimota Hospital,District Hospital,Greater Accra,Ga East,Achimota,yes,Active,"OPD;IPD;Maternity",+233-302-403811
+Pantang Hospital,Specialist Psychiatric,Greater Accra,Ga East,Pantang,yes,Active,"Mental Health;OPD;IPD",+233-302-401017
+Greater Accra Regional Hospital,Regional Hospital,Greater Accra,Ayawaso East,Accra,yes,Active,"OPD;IPD;Surgery;Maternity",+233-302-228382
+Effia Nkwanta Regional Hospital,Regional Hospital,Western,Sekondi-Takoradi,Sekondi,yes,Active,"OPD;IPD;Surgery;Maternity",+233-312-046247
+Sunyani Regional Hospital,Regional Hospital,Bono,Sunyani Municipal,Sunyani,yes,Active,"OPD;IPD;Surgery;Maternity",+233-352-027067
+Bolgatanga Regional Hospital,Regional Hospital,Upper East,Bolgatanga Municipal,Bolgatanga,yes,Active,"OPD;IPD;Surgery;Maternity",+233-382-022278
+Wa Regional Hospital,Regional Hospital,Upper West,Wa Municipal,Wa,yes,Active,"OPD;IPD;Surgery;Maternity",+233-392-022174
+Volta Regional Hospital,Regional Hospital,Volta,Ho Municipal,Ho,yes,Active,"OPD;IPD;Surgery;Maternity",+233-362-026373
+Eastern Regional Hospital,Regional Hospital,Eastern,Koforidua Municipal,Koforidua,yes,Active,"OPD;IPD;Surgery;Maternity",+233-342-022205
+Mamprobi Polyclinic,Polyclinic,Greater Accra,Ablekuma South,Mamprobi,yes,Active,"OPD;Maternity",+233-302-685561
+Adabraka Polyclinic,Polyclinic,Greater Accra,Korle Klottey,Adabraka,yes,Active,"OPD;Maternity",+233-302-228381
+Madina Polyclinic,Polyclinic,Greater Accra,La Nkwantanang Madina,Madina,yes,Active,"OPD;Maternity",+233-302-407612
+SDA Hospital Kumasi,Mission Hospital,Ashanti,Kumasi Metropolitan,Kumasi,yes,Active,"OPD;IPD;Surgery;Maternity",+233-322-022448
+Holy Family Hospital Berekum,Mission Hospital,Bono,Berekum Municipal,Berekum,yes,Active,"OPD;IPD;Surgery;Maternity",+233-352-222135
+St. Patrick's Hospital Offinso,Mission Hospital,Ashanti,Offinso Municipal,Offinso,yes,Active,"OPD;IPD;Surgery;Maternity",+233-322-194036
+Battor Catholic Hospital,Mission Hospital,Volta,North Tongu,Battor,yes,Active,"OPD;IPD;Maternity",+233-364-094281
+Nyaho Medical Centre,Private Hospital,Greater Accra,Ayawaso West,Airport Residential,no,Not Accredited,"OPD;IPD;Surgery;Maternity",+233-302-775341
+Trust Hospital,Private Hospital,Greater Accra,Korle Klottey,Osu,yes,Active,"OPD;IPD;Maternity",+233-302-776787
+LEKMA Hospital,District Hospital,Greater Accra,Ledzokuku,Teshie,yes,Active,"OPD;IPD;Maternity",+233-303-414280
+Princess Marie Louise Children's Hospital,Children's Hospital,Greater Accra,Korle Klottey,Adabraka,yes,Active,"OPD;Paediatrics;IPD",+233-302-228174
+Maamobi General Hospital,District Hospital,Greater Accra,Ayawaso Central,Maamobi,yes,Active,"OPD;IPD;Maternity",+233-302-220361
