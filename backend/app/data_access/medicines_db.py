@@ -64,12 +64,12 @@ def _search(db: Session, query: str, limit: int, min_score: float) -> list[Medic
     return [_row_to_match(row, score) for row, score in candidates[:limit]]
 
 
-def search_medicine(query: str, limit: int = 5, min_score: float = 60.0) -> list[MedicineMatch]:
+def search_medicine(query: str, limit: int = 5, min_score: float = 75.0) -> list[MedicineMatch]:
     with session_scope() as db:
         return _search(db, query, limit, min_score)
 
 
 def search_medicine_with_session(
-    db: Session, query: str, limit: int = 5, min_score: float = 60.0
+    db: Session, query: str, limit: int = 5, min_score: float = 75.0
 ) -> list[MedicineMatch]:
     return _search(db, query, limit, min_score)

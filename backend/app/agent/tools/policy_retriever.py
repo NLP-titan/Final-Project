@@ -9,7 +9,17 @@ from __future__ import annotations
 from app.agent.tools.base import Tool
 
 
-ALLOWED_CATEGORIES = ["coverage", "enrollment", "disputes", "facilities", "medicines"]
+ALLOWED_CATEGORIES = [
+    "coverage",
+    "enrollment",
+    "disputes",
+    "facilities",
+    "medicines",
+    "policy",
+    "services",
+    "system",
+    "general",
+]
 
 _retriever = None
 

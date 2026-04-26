@@ -1,0 +1,112 @@
+{
+  "kb_name": "ghana_nhis_entitlement_kb",
+  "version": "2.0.0",
+  "embedding_field": "text",
+  "id_field": "id",
+  "database_dir": "database",
+  "sources_dir": "knowledge_base/sources",
+  "metadata_fields": [
+    "domain",
+    "chunk_type",
+    "source_file",
+    "source_row"
+  ],
+  "collections": [
+    {
+      "source": "database/lookup_guide.csv",
+      "output": "sources/lookup_guide.jsonl",
+      "chunk_count": 13,
+      "handler": "lookup_guide"
+    },
+    {
+      "source": "database/nhis_hospitals.csv",
+      "output": "sources/nhis_hospitals.jsonl",
+      "chunk_count": 60,
+      "handler": "hospitals"
+    },
+    {
+      "source": "database/nhis_medicines.csv",
+      "output": "sources/nhis_medicines.jsonl",
+      "chunk_count": 153,
+      "handler": "medicines_legacy"
+    },
+    {
+      "source": "database/nhis_medicines_formulary_2025.csv",
+      "output": "sources/nhis_medicines_formulary_2025.jsonl",
+      "chunk_count": 222,
+      "handler": "formulary_2025"
+    },
+    {
+      "source": "database/nhis_services.csv",
+      "output": "sources/nhis_services.jsonl",
+      "chunk_count": 65,
+      "handler": "services"
+    },
+    {
+      "source": "database/summary_by_category.csv",
+      "output": "sources/summary_by_category.jsonl",
+      "chunk_count": 21,
+      "handler": "summary_by_category"
+    },
+    {
+      "source": "database/nhis_benefits_kb.docx",
+      "output": "sources/nhis_benefits_kb.jsonl",
+      "chunk_count": 14,
+      "handler": "docx"
+    },
+    {
+      "source": "database/nhis_complete_listing_kb.docx",
+      "output": "sources/nhis_complete_listing_kb.jsonl",
+      "chunk_count": 15,
+      "handler": "docx"
+    },
+    {
+      "source": "database/nhis_disputes_kb.docx",
+      "output": "sources/nhis_disputes_kb.jsonl",
+      "chunk_count": 7,
+      "handler": "docx"
+    },
+    {
+      "source": "database/nhis_hospitals_medicines_benefits_kb.docx",
+      "output": "sources/nhis_hospitals_medicines_benefits_kb.jsonl",
+      "chunk_count": 10,
+      "handler": "docx"
+    },
+    {
+      "source": "database/nhis_membership_kb.docx",
+      "output": "sources/nhis_membership_kb.jsonl",
+      "chunk_count": 5,
+      "handler": "docx"
+    },
+    {
+      "source": "database/nhis_policy_kb.docx",
+      "output": "sources/nhis_policy_kb.jsonl",
+      "chunk_count": 7,
+      "handler": "docx"
+    },
+    {
+      "source": "knowledge_base/build_from_database.py (static + optional root NHIS Agent.docx)",
+      "output": "agent_system_context.jsonl",
+      "chunk_count": 8,
+      "handler": "system"
+    }
+  ],
+  "total_chunks": 600,
+  "files": {
+    "lookup_guide.jsonl": 13,
+    "nhis_hospitals.jsonl": 60,
+    "nhis_medicines.jsonl": 153,
+    "nhis_medicines_formulary_2025.jsonl": 222,
+    "nhis_services.jsonl": 65,
+    "summary_by_category.jsonl": 21,
+    "nhis_benefits_kb.jsonl": 14,
+    "nhis_complete_listing_kb.jsonl": 15,
+    "nhis_disputes_kb.jsonl": 7,
+    "nhis_hospitals_medicines_benefits_kb.jsonl": 10,
+    "nhis_membership_kb.jsonl": 5,
+    "nhis_policy_kb.jsonl": 7,
+    "agent_system_context.jsonl": 8
+  },
+  "combined_file": "all_chunks.jsonl",
+  "combined_chunk_count": 600
+}

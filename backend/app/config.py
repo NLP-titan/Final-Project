@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     medicines_csv: str = str(BACKEND_ROOT / "data" / "raw" / "medicines.csv")
     facilities_csv: str = str(BACKEND_ROOT / "data" / "raw" / "facilities.csv")
     policies_dir: str = str(BACKEND_ROOT / "data" / "raw" / "policies")
+    knowledge_base_dir: str = str(BACKEND_ROOT / "data" / "raw" / "knowledge_base")
 
     # DB
     database_url: str = f"sqlite:///{BACKEND_ROOT / 'data' / 'processed' / 'app.db'}"

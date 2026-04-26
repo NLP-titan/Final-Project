@@ -1,0 +1,61 @@
+hospital_code,facility_type,facility_name,town,region,services_offered,contact,nhis_accredited
+H001,Teaching Hospital,Korle Bu Teaching Hospital,"Accra, Greater Accra",Greater Accra,All specialties,033-2-665401,Yes
+H002,Teaching Hospital,Komfo Anokye Teaching Hospital,"Kumasi, Ashanti",Ashanti,All specialties,032-2-022301,Yes
+H003,Teaching Hospital,Tamale Teaching Hospital,"Tamale, Northern",Northern,All specialties,037-2-022615,Yes
+H004,Teaching Hospital,Cape Coast Teaching Hospital,"Cape Coast, Central",Central,All specialties,033-2-134000,Yes
+H005,Teaching Hospital,Ho Teaching Hospital,"Ho, Volta",Volta,All specialties,036-2-026851,Yes
+H006,Regional Hospital,Bolgatanga Regional Hospital,Bolgatanga,Upper East,General & specialist,037-2-023174,Yes
+H007,Regional Hospital,Wa Regional Hospital,Wa,Upper West,General & specialist,039-2-022269,Yes
+H008,Regional Hospital,Sunyani Regional Hospital,Sunyani,Bono,General & specialist,035-2-027283,Yes
+H009,Regional Hospital,Koforidua Regional Hospital,Koforidua,Eastern,General & specialist,034-2-022320,Yes
+H010,Regional Hospital,Sekondi-Takoradi Regional Hospital,Sekondi,Western,General & specialist,031-2-046114,Yes
+H011,Regional Hospital,Techiman Regional Hospital,Techiman,Bono East,General & specialist,035-2-091010,Yes
+H012,Regional Hospital,Goaso Regional Hospital,Goaso,Ahafo,General & specialist,,Yes
+H013,Regional Hospital,Dambai Regional Hospital,Dambai,Oti,General & specialist,,Yes
+H014,Regional Hospital,Nalerigu Regional Hospital,Nalerigu,North East,General & specialist,,Yes
+H015,Regional Hospital,Damongo Regional Hospital,Damongo,Savannah,General & specialist,,Yes
+H016,Regional Hospital,Sefwi Wiawso Regional Hospital,Sefwi Wiawso,Western North,General & specialist,,Yes
+H017,District Hospital,Tema General Hospital,Tema,Greater Accra,General,030-2-209461,Yes
+H018,District Hospital,Accra Ridge Hospital,Accra,Greater Accra,General,030-2-670523,Yes
+H019,District Hospital,37 Military Hospital (Civilian Wing),Accra,Greater Accra,General & specialist,030-2-776111,Yes
+H020,District Hospital,La General Hospital,Accra,Greater Accra,General,030-2-716200,Yes
+H021,District Hospital,Achimota Hospital,Accra,Greater Accra,General,030-2-407561,Yes
+H022,District Hospital,Effia-Nkwanta Regional Hospital,Sekondi,Western,General & specialist,031-2-046114,Yes
+H023,District Hospital,Okomfo Anokye Hospital Annex (KATH),Kumasi,Ashanti,General,032-2-022301,Yes
+H024,District Hospital,Agogo Presbyterian Hospital,Agogo,Ashanti,General,032-2-091010,Yes
+H025,District Hospital,Nkoranza District Hospital,Nkoranza,Bono East,General,,Yes
+H026,District Hospital,Berekum District Hospital,Berekum,Bono,General,,Yes
+H027,District Hospital,Keta Municipal Hospital,Keta,Volta,General,,Yes
+H028,District Hospital,Hohoe Municipal Hospital,Hohoe,Volta,General,,Yes
+H029,District Hospital,Bawku Presbyterian Hospital,Bawku,Upper East,General,,Yes
+H030,District Hospital,Jirapa District Hospital,Jirapa,Upper West,General,,Yes
+H031,Dialysis Centre,Korle Bu Dialysis Unit,Accra,Greater Accra,Haemodialysis,,Yes - Free
+H032,Dialysis Centre,Komfo Anokye Dialysis Unit,Kumasi,Ashanti,Haemodialysis,,Yes - Free
+H033,Dialysis Centre,Tamale Teaching Hospital Dialysis Unit,Tamale,Northern,Haemodialysis,,Yes - Free
+H034,Dialysis Centre,Cape Coast Teaching Hospital Dialysis Unit,Cape Coast,Central,Haemodialysis,,Yes - Free
+H035,Dialysis Centre,Ho Teaching Hospital Dialysis Unit,Ho,Volta,Haemodialysis,,Yes - Free
+H036,Dialysis Centre,Bolgatanga Regional Hospital Dialysis Unit,Bolgatanga,Upper East,Haemodialysis,,Yes - Free
+H037,Dialysis Centre,Wa Regional Hospital Dialysis Unit,Wa,Upper West,Haemodialysis,,Yes - Free
+H038,Dialysis Centre,Koforidua Regional Hospital Dialysis Unit,Koforidua,Eastern,Haemodialysis,,Yes - Free
+H039,Dialysis Centre,Sunyani Regional Hospital Dialysis Unit,Sunyani,Bono,Haemodialysis,,Yes - Free
+H040,Dialysis Centre,Sekondi Regional Hospital Dialysis Unit,Sekondi,Western,Haemodialysis,,Yes - Free
+H041,Dialysis Centre,Techiman Regional Hospital Dialysis Unit,Techiman,Bono East,Haemodialysis,,Yes - Free
+H042,Dialysis Centre,Tema General Hospital Dialysis Unit,Tema,Greater Accra,Haemodialysis,,Yes - Free
+H043,Dialysis Centre,37 Military Hospital Dialysis Unit,Accra,Greater Accra,Haemodialysis,,Yes - Free
+H044,Dialysis Centre,Effia-Nkwanta Dialysis Unit,Sekondi,Western,Haemodialysis,,Yes - Free
+H045,Dialysis Centre,Agogo Presbyterian Hospital Dialysis Unit,Agogo,Ashanti,Haemodialysis,,Yes - Free
+H046,Dialysis Centre,Tamale West Hospital Dialysis Unit,Tamale,Northern,Haemodialysis,,Yes - Free
+H047,Dialysis Centre,Upper East Regional Dialysis Unit,Bolgatanga,Upper East,Haemodialysis,,Yes - Free
+H048,Dialysis Centre,Ashanti Bekwai District Hospital Dialysis Unit,Bekwai,Ashanti,Haemodialysis,,Yes - Free
+H049,Dialysis Centre,Dormaa Presbyterian Hospital Dialysis Unit,Dormaa Ahenkro,Bono,Haemodialysis,,Yes - Free
+H050,Dialysis Centre,Nalerigu Baptist Medical Centre Dialysis Unit,Nalerigu,North East,Haemodialysis,,Yes - Free
+H051,Mission/Faith-Based,Holy Family Hospital,Techiman,Bono East,General,,Yes
+H052,Mission/Faith-Based,St. Joseph's Hospital,Koforidua,Eastern,General,,Yes
+H053,Mission/Faith-Based,Battor Catholic Hospital,Battor,Volta,General,,Yes
+H054,Mission/Faith-Based,Wenchi Methodist Hospital,Wenchi,Bono,General,,Yes
+H055,Mission/Faith-Based,Dormaa Presbyterian Hospital,Dormaa Ahenkro,Bono,General,,Yes
+H056,Mission/Faith-Based,Nkoranza Catholic Hospital,Nkoranza,Bono East,General,,Yes
+H057,Mission/Faith-Based,Nalerigu Baptist Medical Centre,Nalerigu,North East,General & surgical,,Yes
+H058,Mission/Faith-Based,St. Martin's Hospital,Agroyesum,Ashanti,General,,Yes
+H059,Mission/Faith-Based,Dunkwa Government Hospital,Dunkwa-on-Offin,Central,General,,Yes
+H060,Mission/Faith-Based,Margaret Marquart Catholic Hospital,Kpando,Volta,General,,Yes

@@ -1,0 +1,66 @@
+service_code,category,service_name,description,facility_requirement,notes
+S001,Outpatient,General Outpatient Consultation,Consultation & assessment by medical officer or nurse,All accredited facilities,No limit stated
+S002,Outpatient,Specialist Outpatient Consultation,Assessment and treatment by specialist,Hospitals with specialists,Referral required
+S003,Outpatient,Nursing Care (Outpatient),"Wound dressing, injections, minor procedures",All accredited facilities,
+S004,Outpatient,Eye Care (Outpatient),"Examination, refraction, basic treatment",Accredited eye centres,
+S005,Outpatient,Dental Care (Outpatient),"Extraction, fillings, oral hygiene instruction",Accredited dental facilities,Excludes cosmetic
+S006,Outpatient,Mental Health (Outpatient),"Psychiatric consultation, counselling, medication",Accredited mental health units,
+S007,Outpatient,Physiotherapy,Rehabilitative exercises and treatment,Accredited physiotherapy centres,
+S008,Outpatient,Family Planning,Contraceptive counselling and supply,All accredited facilities,
+S009,Inpatient,General Ward Admission,"Bed, nursing care, meals, basic medications",All hospitals,
+S010,Inpatient,Specialist Ward Admission,Specialist-supervised inpatient care,Referral hospitals,Referral required
+S011,Inpatient,Intensive Care Unit (ICU),Critical care monitoring and treatment,Teaching/Regional hospitals,
+S012,Inpatient,High Dependency Unit (HDU),Intermediate-level critical care,Selected hospitals,
+S013,Inpatient,Isolation Ward,Care for infectious/communicable disease cases,Designated hospitals,
+S014,Inpatient,Surgical Ward,Pre- and post-operative inpatient care,Hospitals with surgical units,
+S015,Surgical,Appendicectomy,Surgical removal of appendix,Hospitals with surgical units,
+S016,Surgical,Caesarean Section,Surgical delivery of baby,Hospitals with surgical units,
+S017,Surgical,Hernia Repair,Inguinal/umbilical hernia repair,Hospitals with surgical units,
+S018,Surgical,Hysterectomy,Surgical removal of uterus,Referral hospitals,Specialist required
+S019,Surgical,Cholecystectomy,Removal of gallbladder,Hospitals with surgical units,
+S020,Surgical,Prostatectomy,Surgical treatment of prostate,Referral hospitals,Specialist required
+S021,Surgical,Wound Debridement,Cleaning and removal of dead tissue,All hospitals,
+S022,Surgical,Fracture Management (Closed),Casting and immobilisation of fractures,All hospitals,
+S023,Surgical,Fracture Management (Open),Surgical fixation of fractures,Hospitals with ortho unit,
+S024,Surgical,Cataract Surgery,Removal of cataract lens,Accredited eye centres,
+S025,Surgical,Tonsillectomy,Removal of tonsils,ENT-equipped hospitals,
+S026,Surgical,Circumcision (Medical),Surgical circumcision for medical indications,All hospitals,
+S027,Maternal & Child Health,Antenatal Care,"Routine ANC visits, screening, counselling",All accredited facilities,
+S028,Maternal & Child Health,Skilled Delivery (Normal),Normal vaginal delivery by trained provider,All accredited facilities,
+S029,Maternal & Child Health,Postnatal Care,Care of mother and baby after delivery,All accredited facilities,
+S030,Maternal & Child Health,Neonatal Care,Care of newborn including resuscitation,Hospitals with neonatal unit,
+S031,Maternal & Child Health,Immunisation,All EPI vaccines,All accredited facilities,Free for under-5s
+S032,Maternal & Child Health,Child Welfare Clinic,"Growth monitoring, nutrition counselling",All accredited facilities,Free for under-5s
+S033,Maternal & Child Health,Prevention of Mother-to-Child Transmission (PMTCT),ARV prophylaxis for HIV+ mothers,All accredited facilities,
+S034,Diagnostic,Full Blood Count (FBC),Complete blood picture analysis,Accredited laboratories,
+S035,Diagnostic,Malaria Rapid Diagnostic Test (RDT),Rapid malaria antigen test,All accredited facilities,
+S036,Diagnostic,Malaria Thick & Thin Film,Microscopy for malaria parasites,Accredited laboratories,
+S037,Diagnostic,Blood Group & Rhesus Typing,ABO and Rh blood group,Accredited laboratories,
+S038,Diagnostic,Urinalysis,Routine urine examination,All accredited facilities,
+S039,Diagnostic,Urine Culture & Sensitivity,Microbiological urine analysis,Accredited laboratories,
+S040,Diagnostic,Stool Microscopy,"Ova, cysts and parasites",Accredited laboratories,
+S041,Diagnostic,Random Blood Sugar (RBS),Blood glucose measurement,All accredited facilities,
+S042,Diagnostic,Fasting Blood Sugar (FBS),Fasting glucose measurement,Accredited laboratories,
+S043,Diagnostic,HbA1c,Glycated haemoglobin for diabetes monitoring,Accredited laboratories,
+S044,Diagnostic,Liver Function Tests (LFTs),"ALT, AST, ALP, bilirubin panel",Accredited laboratories,
+S045,Diagnostic,Renal Function Tests (RFTs),"Urea, creatinine, electrolytes",Accredited laboratories,
+S046,Diagnostic,Lipid Profile,"Cholesterol, triglycerides, HDL, LDL",Accredited laboratories,
+S047,Diagnostic,Thyroid Function Tests,"TSH, T3, T4",Accredited laboratories,
+S048,Diagnostic,HIV Rapid Test,Rapid HIV antibody test,All accredited facilities,
+S049,Diagnostic,CD4 Count,Lymphocyte subset count for HIV,Designated HIV centres,
+S050,Diagnostic,Sputum AFB (Microscopy),TB acid-fast bacilli smear,Accredited laboratories,
+S051,Diagnostic,Chest X-Ray,Plain chest radiograph,Facilities with X-ray,
+S052,Diagnostic,Abdominal Ultrasound,Ultrasound of abdominal organs,Facilities with ultrasound,
+S053,Diagnostic,Obstetric Ultrasound,Foetal and pelvic ultrasound,Facilities with ultrasound,
+S054,Diagnostic,Electrocardiogram (ECG),Cardiac rhythm and function assessment,Hospitals with ECG,
+S055,Diagnostic,CT Scan,Computed tomography imaging,Teaching/specialist hospitals,Referral required
+S056,Diagnostic,MRI,Magnetic resonance imaging,Teaching/specialist hospitals,Referral required
+S057,Emergency,Emergency Resuscitation,"CPR, airway management, stabilisation",All accredited facilities,
+S058,Emergency,Emergency Surgery,Life-saving surgical intervention,Hospitals with surgical units,
+S059,Emergency,Blood Transfusion,Whole blood or component transfusion,Hospitals with blood bank,
+S060,Emergency,Haemodialysis,Renal replacement therapy for AKI/CKD,20 designated dialysis centres,Free at dialysis centres
+S061,Emergency,Management of Burns,"Wound care, fluid resuscitation, skin grafting",Burns units / referral hospitals,
+S062,Emergency,Snakebite Management,Antivenom and supportive care,All accredited facilities,
+S063,Emergency,Acute Psychiatric Emergency,Stabilisation of acute mental health crisis,Accredited mental health units,
+S064,Preventive,Health Education & Promotion,Individual and group health education,All accredited facilities,
+S065,Preventive,Cervical Cancer Screening (VIA),Visual inspection with acetic acid,Selected accredited facilities,
