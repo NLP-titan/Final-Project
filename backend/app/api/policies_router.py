@@ -14,6 +14,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Response,
     UploadFile,
     status,
 )
@@ -129,7 +130,7 @@ async def upload_document(
 
 
 @router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_document(doc_id: int, db: Session = Depends(get_db)) -> None:
+def delete_document(doc_id: int, db: Session = Depends(get_db)) -> Response:
     row = db.get(PolicyDocument, doc_id)
     if not row:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -138,6 +139,7 @@ def delete_document(doc_id: int, db: Session = Depends(get_db)) -> None:
         target.unlink()
     db.delete(row)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def _run_ingest_sync(reset: bool) -> IngestStatus:

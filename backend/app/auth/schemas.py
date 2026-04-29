@@ -10,6 +10,10 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     full_name: Optional[str] = Field(default=None, max_length=255)
+    phone: Optional[str] = Field(default=None, max_length=32)
+    region: Optional[str] = Field(default=None, max_length=128)
+    nhis_number: Optional[str] = Field(default=None, max_length=32)
+    membership_type: Optional[str] = Field(default=None, max_length=32)
 
 
 class UserLogin(BaseModel):
@@ -23,6 +27,10 @@ class UserOut(BaseModel):
     full_name: Optional[str] = None
     role: str
     is_active: bool
+    phone: Optional[str] = None
+    region: Optional[str] = None
+    nhis_number: Optional[str] = None
+    membership_type: Optional[str] = None
     created_at: dt.datetime
 
     model_config = {"from_attributes": True}
@@ -31,6 +39,10 @@ class UserOut(BaseModel):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(default=None, max_length=255)
     password: Optional[str] = Field(default=None, min_length=8, max_length=128)
+    phone: Optional[str] = Field(default=None, max_length=32)
+    region: Optional[str] = Field(default=None, max_length=128)
+    nhis_number: Optional[str] = Field(default=None, max_length=32)
+    membership_type: Optional[str] = Field(default=None, max_length=32)
 
 
 class AdminUserUpdate(BaseModel):

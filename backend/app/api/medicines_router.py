@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -123,9 +123,10 @@ def update_medicine(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin)],
 )
-def delete_medicine(medicine_id: int, db: Session = Depends(get_db)) -> None:
+def delete_medicine(medicine_id: int, db: Session = Depends(get_db)) -> Response:
     row = db.get(Medicine, medicine_id)
     if not row:
         raise HTTPException(status_code=404, detail="Medicine not found")
     db.delete(row)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
