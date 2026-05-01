@@ -36,4 +36,11 @@ Then `POST http://localhost:8000/api/chat` with `{ "message": "Is dialysis cover
 
 ## Evaluation
 
-`python -m scripts.eval_cases` runs the 30 evaluation questions and reports tool-routing and answer-substring accuracy across the five scenario categories (coverage, drug entitlement, facility accreditation, membership/renewal, rights disputes).
+`python -m scripts.eval_cases` builds 29 evaluation cases directly from the knowledge base (medicines.csv, facilities.csv, and the policy markdown files) and runs them against the agent.
+
+Two metrics are reported per category:
+
+- **Tool routing accuracy** — was the correct tool invoked?
+- **Answer correctness** — for medicines/facilities, a hard ground-truth check against the CSV; for policy questions, an LLM-as-judge score (1–3) against the actual source section, with ≥ 2 counting as a pass.
+
+The judge uses a separately configured model (`JUDGE_MODEL` in `.env`) so it is independent of the agent model being evaluated.
