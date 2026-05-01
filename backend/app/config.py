@@ -29,7 +29,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-6"
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "openai/gpt-5.4" 
+    judge_model: str = "google/gemini-3.1-pro-preview"  # model used by the eval LLM judge
 
     # Embedding / vector store
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"

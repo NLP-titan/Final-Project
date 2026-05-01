@@ -448,17 +448,26 @@ The agent grounds its policy answers in the following sources, all under
 
 ## Evaluation
 
-Run the test-case battery:
+`python -m scripts.eval_cases` builds 29 evaluation cases directly from the
+knowledge base (`medicines.csv`, `facilities.csv`, and the policy markdown
+files) and runs them against the agent.
 
 ```bash
 cd backend
-python -m scripts.eval_cases                         # heuristic mode
-python -m scripts.eval_cases --provider anthropic    # LLM-graded mode
+python -m scripts.eval_cases                         # heuristic mode (no LLM judge)
+python -m scripts.eval_cases --provider anthropic    # full LLM path + LLM judge
+python -m scripts.eval_cases --provider openai
 ```
 
-This evaluates 30 synthetic questions across five categories (coverage, drug
-entitlement, facility accreditation, membership/renewal, rights & disputes)
-and reports tool-routing accuracy plus answer-substring match rate.
+Two metrics are reported per category:
+
+- **Tool routing accuracy** — was the correct tool invoked?
+- **Answer correctness** — for medicines/facilities, a hard ground-truth
+  check against the CSV; for policy questions, an LLM-as-judge score (1–3)
+  against the source section, with ≥ 2 counting as a pass.
+
+The judge uses a separately configured model (`JUDGE_MODEL` in `.env`) so it
+is independent of the agent model being evaluated.
 
 For unit tests:
 

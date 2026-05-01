@@ -160,7 +160,7 @@ def _openai_tool_specs() -> list[dict]:
 def _run_openai(question: str, history: list[dict]) -> AgentResponse:
     from openai import OpenAI
 
-    client = OpenAI(api_key=settings.openai_api_key)
+    client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=settings.openai_api_key)
     messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
     for h in history:
         if h.get("role") in {"user", "assistant"} and h.get("content"):

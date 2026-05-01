@@ -42,7 +42,7 @@ backend/
 │   └── processed/                 # SQLite + ChromaDB live here (gitignored)
 ├── scripts/
 │   ├── ingest.py                  # Build / refresh the vector store
-│   └── eval_cases.py              # 30 evaluation cases
+│   └── eval_cases.py              # 29 KB-sourced eval cases + LLM-as-judge
 ├── tests/                         # 40 tests covering tools, auth, CRUD, chat, rate limit, retry
 └── requirements.txt
 ```
@@ -142,17 +142,32 @@ pytest -q
 ## Evaluation
 
 ```bash
-python -m scripts.eval_cases                   # heuristic fallback (no API key)
-python -m scripts.eval_cases --provider anthropic   # use the configured LLM
+python -m scripts.eval_cases                              # heuristic fallback, no LLM judge
+python -m scripts.eval_cases --provider openai            # LLM agent + LLM judge
+python -m scripts.eval_cases --provider openai \
+    --judge-model openai/gpt-4o                           # override judge model at runtime
 ```
 
-Runs 30 cases (6 per scenario category: coverage, drug entitlement, facility accreditation, membership/renewal, rights disputes) and prints tool-routing and answer-substring accuracy. Detailed JSON is written to `data/processed/eval_results.json`.
+Runs 29 cases built from the knowledge base itself:
+
+| Source | Cases | Check |
+|---|---|---|
+| `medicines.csv` | 6 (3 covered, 3 not-covered) | Hard ground-truth match |
+| `facilities.csv` | 6 (5 accredited, 1 not-accredited) | Hard ground-truth match |
+| `data/raw/policies/*.md` | 17 (6 coverage, 6 enrollment, 5 disputes) | LLM-as-judge (score 1–3, pass ≥ 2) |
+
+Reports **tool routing accuracy** and **answer correctness** overall and per category. For policy cases the per-category average judge score is also printed.
+
+The judge model is configured independently of the agent model to avoid self-grading — set `JUDGE_MODEL` in `.env` (e.g. `JUDGE_MODEL=openai/gpt-4o`). Both route through OpenRouter using `OPENAI_API_KEY`.
+
+Detailed JSON is written to `data/processed/eval_results.json`; generated cases are saved to `data/processed/eval_cases_generated.json` for inspection.
 
 ## Configuration
 
 All settings live in `.env` (see `.env.example`). Highlights:
 
 - `LLM_PROVIDER` — `anthropic` or `openai`. Missing key → heuristic fallback.
+- `JUDGE_MODEL` — OpenRouter model string for the eval LLM judge (e.g. `openai/gpt-4o`). Should differ from the agent model to avoid self-grading.
 - `DATABASE_URL` — defaults to SQLite at `data/processed/app.db`. Any SQLAlchemy URL works (PostgreSQL, etc.).
 - `JWT_SECRET` — change in production. Tokens expire after `JWT_EXPIRES_MINUTES`.
 - `INITIAL_ADMIN_EMAIL` / `INITIAL_ADMIN_PASSWORD` — auto-created admin on first boot.
