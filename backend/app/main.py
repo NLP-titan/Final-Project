@@ -14,11 +14,15 @@ from app.api.auth_router import router as auth_router
 from app.api.conversations_router import router as conversations_router
 from app.api.facilities_router import router as facilities_router
 from app.api.feedback_router import router as feedback_router
+from app.api.health_updates_router import router as health_updates_router
 from app.api.medicines_router import router as medicines_router
 from app.api.policies_router import router as policies_router
+from app.api.prescriptions_router import router as prescriptions_router
+from app.api.resources_router import router as resources_router
+from app.api.translation_router import router as translation_router
 from app.api.routes import router as core_router
 from app.api.users_router import router as users_router
-from app.config import settings
+from app.config import assert_production_safe, settings
 from app.db.init_db import init_db
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_log import RequestLogMiddleware
@@ -31,7 +35,8 @@ log = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     configure_logging(settings.log_level)
-    log.info("Starting NHIS Assistant backend")
+    log.info("Starting NHIS Assistant backend (env=%s)", settings.app_env)
+    assert_production_safe()
     try:
         init_db()
         log.info("Database initialised")
@@ -67,6 +72,10 @@ def create_app() -> FastAPI:
     app.include_router(conversations_router, prefix="/api")
     app.include_router(policies_router, prefix="/api")
     app.include_router(feedback_router, prefix="/api")
+    app.include_router(health_updates_router, prefix="/api")
+    app.include_router(resources_router, prefix="/api")
+    app.include_router(prescriptions_router, prefix="/api")
+    app.include_router(translation_router, prefix="/api")
 
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(request: Request, exc: RequestValidationError):

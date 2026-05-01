@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -28,6 +28,8 @@ class FacilityOut(BaseModel):
     accreditation_status: Optional[str] = None
     services: Optional[str] = None
     phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     created_at: dt.datetime
     updated_at: dt.datetime
 
@@ -44,6 +46,8 @@ class FacilityCreate(BaseModel):
     accreditation_status: Optional[str] = Field(default=None, max_length=64)
     services: Optional[str] = Field(default=None, max_length=512)
     phone: Optional[str] = Field(default=None, max_length=64)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class FacilityUpdate(BaseModel):
@@ -56,6 +60,8 @@ class FacilityUpdate(BaseModel):
     accreditation_status: Optional[str] = Field(default=None, max_length=64)
     services: Optional[str] = Field(default=None, max_length=512)
     phone: Optional[str] = Field(default=None, max_length=64)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 @router.get("", response_model=list[FacilityOut])
@@ -133,9 +139,10 @@ def update_facility(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_admin)],
 )
-def delete_facility(facility_id: int, db: Session = Depends(get_db)) -> None:
+def delete_facility(facility_id: int, db: Session = Depends(get_db)) -> Response:
     row = db.get(Facility, facility_id)
     if not row:
         raise HTTPException(status_code=404, detail="Facility not found")
     db.delete(row)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

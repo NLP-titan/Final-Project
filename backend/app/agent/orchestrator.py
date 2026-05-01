@@ -32,8 +32,8 @@ from app.utils.retry import retry_call
 
 
 log = logging.getLogger(__name__)
-MAX_TOOL_ITERATIONS = 4
-MAX_HISTORY_TURNS = 10  # cap to keep prompts bounded
+MAX_TOOL_ITERATIONS = settings.agent_max_tool_iterations
+MAX_HISTORY_TURNS = settings.agent_max_history_turns  # cap to keep prompts bounded
 
 
 @dataclass

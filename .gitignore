@@ -10,6 +10,11 @@ env/
 # Vector store / processed artifacts
 backend/data/processed/
 
-# Editor
+# Frontend build outputs and deps
+frontend/dist/
+frontend/node_modules/
+
+# Editor / agent
 .idea/
 .vscode/
+.claude/

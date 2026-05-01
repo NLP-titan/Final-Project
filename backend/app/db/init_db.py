@@ -9,13 +9,13 @@ import csv
 import logging
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.security import hash_password
 from app.config import settings
 from app.db.base import Base, get_engine, session_scope
-from app.db.models import Facility, Medicine, User
+from app.db.models import Facility, HealthUpdate, Medicine, Resource, User
 
 
 log = logging.getLogger(__name__)
@@ -23,9 +23,68 @@ log = logging.getLogger(__name__)
 
 def init_db() -> None:
     Base.metadata.create_all(bind=get_engine())
+    _apply_lightweight_migrations()
     with session_scope() as db:
         _ensure_admin(db)
     _seed_reference_data()
+    _seed_content_data()
+    _geocode_facilities_offline()
+
+
+# Map of table -> list of (column_name, column_ddl) we want to ensure exists.
+# SQLite's `ALTER TABLE ... ADD COLUMN` is the simplest forward migration we can do
+# without pulling in Alembic. Keep entries idempotent.
+_REQUIRED_COLUMNS: dict[str, list[tuple[str, str]]] = {
+    "facilities": [
+        ("lat", "FLOAT"),
+        ("lng", "FLOAT"),
+    ],
+    "health_updates": [
+        ("source_url", "VARCHAR(1024)"),
+    ],
+    "users": [
+        ("language_preference", "VARCHAR(8) NOT NULL DEFAULT 'en'"),
+    ],
+}
+
+
+def _apply_lightweight_migrations() -> None:
+    engine = get_engine()
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table, columns in _REQUIRED_COLUMNS.items():
+            if not inspector.has_table(table):
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for name, ddl in columns:
+                if name in existing:
+                    continue
+                try:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    log.info("Added column %s.%s", table, name)
+                except Exception as exc:
+                    log.warning("Could not add column %s.%s: %s", table, name, exc)
+
+
+def _geocode_facilities_offline() -> None:
+    """Apply the offline town-centroid lookup to any facility missing coords.
+    Network-based geocoding is left to `scripts.geocode_facilities`."""
+    try:
+        from scripts.geocode_facilities import _lookup_offline  # type: ignore
+    except Exception:
+        return
+    with session_scope() as db:
+        rows = db.execute(
+            select(Facility).where((Facility.lat.is_(None)) | (Facility.lng.is_(None)))
+        ).scalars().all()
+        hits = 0
+        for row in rows:
+            coords = _lookup_offline(row.town)
+            if coords:
+                row.lat, row.lng = coords
+                hits += 1
+        if hits:
+            log.info("Backfilled lat/lng for %d facilities (offline lookup)", hits)
 
 
 def _seed_reference_data() -> None:
@@ -73,6 +132,42 @@ def _ensure_admin(db: Session) -> None:
     )
     db.add(admin)
     log.info("Created initial admin user %s", email)
+
+
+def _seed_content_data() -> None:
+    with session_scope() as db:
+        if not db.execute(select(HealthUpdate.id).limit(1)).first():
+            _seed_health_updates(db)
+        if not db.execute(select(Resource.id).limit(1)).first():
+            _seed_resources(db)
+
+
+def _seed_health_updates(db: Session) -> None:
+    updates = [
+        HealthUpdate(title="New Antimalarial Drugs Added to NHIS Formulary", source="NHIS Official", category="Drug Formulary", summary="New artemisinin-based combination therapies have been approved and added to the NHIS Essential Medicines List, improving access for malaria patients at accredited facilities.", published_date="24 May, 2025"),
+        HealthUpdate(title="Nationwide Polio Vaccination Campaign", source="Ghana Health Service", category="Disease Alerts", summary="Ghana Health Service is conducting a nationwide polio vaccination campaign targeting children under five. Visit your nearest NHIS-accredited health facility to participate.", published_date="12 March, 2025"),
+        HealthUpdate(title="Digital Renewal System Scheduled Maintenance", source="NHIS IT Dept", category="Policy Updates", summary="The *929# USSD renewal system will be offline for scheduled maintenance. Members are advised to visit district offices or use the NHIA mobile app during this period.", published_date="05 March, 2025"),
+        HealthUpdate(title="Maternal Care Package Expanded", source="NHIS Official", category="Policy Updates", summary="NHIS has expanded its maternal care package to include additional antenatal visits and postnatal counselling sessions at no cost to registered members.", published_date="18 Feb, 2025"),
+        HealthUpdate(title="Cholera Outbreak Precautionary Measures", source="Ghana Health Service", category="Disease Alerts", summary="Following reports of cholera cases in parts of Greater Accra, the Ghana Health Service urges all residents to maintain proper hygiene. NHIS covers cholera treatment at accredited facilities.", published_date="10 Feb, 2025"),
+        HealthUpdate(title="NHIS Card Replacement Process Simplified", source="NHIS Official", category="Policy Updates", summary="Lost or damaged NHIS cards can now be replaced at any district office with a valid Ghana Card. The fee has been waived for indigent members.", published_date="02 Jan, 2025"),
+    ]
+    for u in updates:
+        db.add(u)
+    log.info("Seeded %d health updates", len(updates))
+
+
+def _seed_resources(db: Session) -> None:
+    resources = [
+        Resource(title="Understanding Your NHIS Card", category="Membership", read_time="3 min", content="Your NHIS card is your gateway to free or subsidised healthcare at over 4,000 accredited facilities across Ghana. It contains your NHIS number, membership type, and expiry date. Always carry it when visiting a health facility. Your membership type determines your premium: SSNIT contributors pay through their monthly deductions, informal sector workers pay a flat annual premium, and indigents are enrolled for free."),
+        Resource(title="What Services Are Excluded from NHIS?", category="Covered Services", read_time="5 min", content="While NHIS covers a broad range of services, some are explicitly excluded. These include: cosmetic surgery, private ward accommodation above the NHIS rate, assisted reproduction (IVF), most cancer treatments beyond surgery, dialysis for chronic kidney disease, and overseas treatment. Emergency stabilisation is always covered regardless of exclusion status. If you believe a covered service has been wrongly denied, you have the right to file a complaint."),
+        Resource(title="How to Dispute an Unfair Charge", category="Your Rights", read_time="4 min", content="If an accredited facility charges you for a service or medicine that should be free under NHIS, you have the right to dispute it. Step 1: Ask for an itemised receipt. Step 2: Contact the NHIA district office in your area. Step 3: File a formal complaint using the NHIA complaint form (available at district offices or nhis.gov.gh). Step 4: The facility has 14 days to respond. The NHIA will investigate and can sanction facilities found to be in breach. Keep all receipts and documents."),
+        Resource(title="Checking if Your Medication is Covered", category="Medicines Guide", read_time="2 min", content="NHIS covers a defined list of medicines called the Essential Medicines List. To check if a drug is covered: use the Medicines Checker tool in this app, ask the NHIS Agent, or consult the full list at nhis.gov.gh. Generics are always preferred. If your doctor prescribes a branded drug and the generic equivalent is on the list, the facility should dispense the generic at no cost. If a covered drug is out of stock, request documentation and the facility should arrange a substitute."),
+        Resource(title="Enrollment and Renewal Steps", category="Enrollment", read_time="4 min", content="New enrollment: Visit any NHIS district office with your Ghana Card and one passport photo. Pay the applicable premium (informal sector). Your card is activated within 3 months. Renewal: Dial *929# on any network, use the NHIA mobile app, or visit your district office. Bring your expired card and Ghana Card. SSNIT members renew automatically through payroll. Pregnant women are enrolled free at any NHIS-accredited facility. Your coverage remains active for 12 months from the renewal date."),
+        Resource(title="Frequently Asked Questions", category="FAQs", read_time="6 min", content="Q: Can I use NHIS at any hospital? Only NHIS-accredited facilities. Use the Facility Finder in this app to locate one near you. Q: What if I forget my card? Most facilities can verify your membership using your Ghana Card and NHIS number. Q: Does NHIS cover my children? Yes, dependants under 18 are covered under a family enrollment. Q: Can I use NHIS in another region? Yes, your card is valid at any accredited facility nationwide. Q: What happens if my card expires? You lose coverage until you renew. Emergency stabilisation may still be provided — ask the facility and contact NHIA if denied."),
+    ]
+    for r in resources:
+        db.add(r)
+    log.info("Seeded %d resources", len(resources))
 
 
 def _yes(value: object) -> bool:
@@ -177,6 +272,8 @@ def _seed_facilities_from_kb(db: Session, csv_path: Path) -> None:
                     accreditation_status="Active" if accredited else "Not Accredited",
                     services=(row.get("services_offered") or "").strip() or None,
                     phone=(row.get("contact") or "").strip() or None,
+                    lat=None,
+                    lng=None,
                 )
             )
             rows += 1

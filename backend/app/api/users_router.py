@@ -1,7 +1,7 @@
 """Admin user management."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -61,7 +61,7 @@ def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
-) -> None:
+) -> Response:
     if user_id == admin.id:
         raise HTTPException(status_code=400, detail="Admins cannot delete themselves")
     user = db.get(User, user_id)
@@ -69,3 +69,4 @@ def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     db.delete(user)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,7 @@
 """Auth endpoints: register, login, current user, change-password, logout."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -32,6 +32,11 @@ def register(payload: UserRegister, db: Session = Depends(get_db)) -> TokenOut:
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
         role="user",
+        phone=payload.phone,
+        region=payload.region,
+        nhis_number=payload.nhis_number,
+        membership_type=payload.membership_type,
+        language_preference=payload.language_preference or "en",
     )
     db.add(user)
     db.commit()
@@ -70,6 +75,16 @@ def update_me(
         user.full_name = payload.full_name
     if payload.password is not None:
         user.hashed_password = hash_password(payload.password)
+    if payload.phone is not None:
+        user.phone = payload.phone
+    if payload.region is not None:
+        user.region = payload.region
+    if payload.nhis_number is not None:
+        user.nhis_number = payload.nhis_number
+    if payload.membership_type is not None:
+        user.membership_type = payload.membership_type
+    if payload.language_preference is not None:
+        user.language_preference = payload.language_preference
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -77,6 +92,5 @@ def update_me(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(_: User = Depends(get_current_user)) -> None:
-    """Stateless JWT — clients drop the token. Endpoint exists for symmetry and audit logging."""
-    return None
+def logout(_: User = Depends(get_current_user)) -> Response:
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
