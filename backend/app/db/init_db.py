@@ -9,7 +9,7 @@ import csv
 import logging
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.security import hash_password
@@ -23,10 +23,68 @@ log = logging.getLogger(__name__)
 
 def init_db() -> None:
     Base.metadata.create_all(bind=get_engine())
+    _apply_lightweight_migrations()
     with session_scope() as db:
         _ensure_admin(db)
     _seed_reference_data()
     _seed_content_data()
+    _geocode_facilities_offline()
+
+
+# Map of table -> list of (column_name, column_ddl) we want to ensure exists.
+# SQLite's `ALTER TABLE ... ADD COLUMN` is the simplest forward migration we can do
+# without pulling in Alembic. Keep entries idempotent.
+_REQUIRED_COLUMNS: dict[str, list[tuple[str, str]]] = {
+    "facilities": [
+        ("lat", "FLOAT"),
+        ("lng", "FLOAT"),
+    ],
+    "health_updates": [
+        ("source_url", "VARCHAR(1024)"),
+    ],
+    "users": [
+        ("language_preference", "VARCHAR(8) NOT NULL DEFAULT 'en'"),
+    ],
+}
+
+
+def _apply_lightweight_migrations() -> None:
+    engine = get_engine()
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table, columns in _REQUIRED_COLUMNS.items():
+            if not inspector.has_table(table):
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for name, ddl in columns:
+                if name in existing:
+                    continue
+                try:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+                    log.info("Added column %s.%s", table, name)
+                except Exception as exc:
+                    log.warning("Could not add column %s.%s: %s", table, name, exc)
+
+
+def _geocode_facilities_offline() -> None:
+    """Apply the offline town-centroid lookup to any facility missing coords.
+    Network-based geocoding is left to `scripts.geocode_facilities`."""
+    try:
+        from scripts.geocode_facilities import _lookup_offline  # type: ignore
+    except Exception:
+        return
+    with session_scope() as db:
+        rows = db.execute(
+            select(Facility).where((Facility.lat.is_(None)) | (Facility.lng.is_(None)))
+        ).scalars().all()
+        hits = 0
+        for row in rows:
+            coords = _lookup_offline(row.town)
+            if coords:
+                row.lat, row.lng = coords
+                hits += 1
+        if hits:
+            log.info("Backfilled lat/lng for %d facilities (offline lookup)", hits)
 
 
 def _seed_reference_data() -> None:
@@ -214,6 +272,8 @@ def _seed_facilities_from_kb(db: Session, csv_path: Path) -> None:
                     accreditation_status="Active" if accredited else "Not Accredited",
                     services=(row.get("services_offered") or "").strip() or None,
                     phone=(row.get("contact") or "").strip() or None,
+                    lat=None,
+                    lng=None,
                 )
             )
             rows += 1

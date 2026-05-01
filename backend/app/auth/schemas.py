@@ -6,6 +6,9 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
+_LANGUAGE_PATTERN = "^(en|tw|gaa|ee)$"
+
+
 class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
@@ -14,6 +17,7 @@ class UserRegister(BaseModel):
     region: Optional[str] = Field(default=None, max_length=128)
     nhis_number: Optional[str] = Field(default=None, max_length=32)
     membership_type: Optional[str] = Field(default=None, max_length=32)
+    language_preference: Optional[str] = Field(default="en", pattern=_LANGUAGE_PATTERN)
 
 
 class UserLogin(BaseModel):
@@ -31,6 +35,7 @@ class UserOut(BaseModel):
     region: Optional[str] = None
     nhis_number: Optional[str] = None
     membership_type: Optional[str] = None
+    language_preference: str = "en"
     created_at: dt.datetime
 
     model_config = {"from_attributes": True}
@@ -43,6 +48,7 @@ class UserUpdate(BaseModel):
     region: Optional[str] = Field(default=None, max_length=128)
     nhis_number: Optional[str] = Field(default=None, max_length=32)
     membership_type: Optional[str] = Field(default=None, max_length=32)
+    language_preference: Optional[str] = Field(default=None, pattern=_LANGUAGE_PATTERN)
 
 
 class AdminUserUpdate(BaseModel):

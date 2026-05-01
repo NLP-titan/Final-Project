@@ -17,6 +17,7 @@ from typing import Optional
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -46,6 +47,8 @@ class User(Base):
     region: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     nhis_number: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     membership_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    # Language preference: ISO codes — "en" (default), "tw" (Twi/Akan), "gaa" (Ga), "ee" (Ewe).
+    language_preference: Mapped[str] = mapped_column(String(8), default="en", nullable=False)
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, server_default=func.now(), nullable=False
     )
@@ -179,6 +182,8 @@ class Facility(Base):
     accreditation_status: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     services: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    lat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    lng: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, server_default=func.now(), nullable=False
     )
@@ -215,8 +220,9 @@ class HealthUpdate(Base):
     __tablename__ = "health_updates"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
     source: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    source_url: Mapped[Optional[str]] = mapped_column(String(1024), unique=True, nullable=True)
     category: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     published_date: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)

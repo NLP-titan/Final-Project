@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { User, MessageSquare, MapPin, AlertCircle, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 import { conversationsApi } from '../api/conversations.js'
 import { healthUpdatesApi } from '../api/healthUpdates.js'
 
-function membershipStatus(user) {
-  if (!user.nhis_number) return { label: 'Not Enrolled', color: 'text-slate-500', dot: 'bg-slate-400' }
-  return { label: 'Active', color: 'text-emerald-600', dot: 'bg-emerald-500' }
+function membershipStatus(user, t) {
+  if (!user.nhis_number) return { label: t('dashboard.notEnrolled'), color: 'text-slate-500', dot: 'bg-slate-400' }
+  return { label: t('dashboard.cardActive'), color: 'text-emerald-600', dot: 'bg-emerald-500' }
 }
 
 function estimatedExpiry(user) {
@@ -18,9 +19,10 @@ function estimatedExpiry(user) {
 
 export default function DashboardPage({ navigateTo }) {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [conversations, setConversations] = useState([])
   const [updates, setUpdates] = useState([])
-  const status = membershipStatus(user)
+  const status = membershipStatus(user, t)
 
   useEffect(() => {
     conversationsApi.list().then(setConversations).catch(() => {})
@@ -50,34 +52,34 @@ export default function DashboardPage({ navigateTo }) {
                   )}
                 </div>
                 <p className="text-slate-500 text-sm mt-1">
-                  {user.membership_type || 'Standard'} Member{user.region ? ` • ${user.region}` : ''}
+                  {user.membership_type || t('dashboard.standardMember')}{user.region ? ` • ${user.region}` : ''}
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigateTo('resources')}
               className="w-full sm:w-auto bg-[#3454D1] text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors shadow-sm">
-              Renew Membership
+              {t('dashboard.renew')}
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             <div>
-              <p className="text-xs text-slate-400 mb-1">Status</p>
+              <p className="text-xs text-slate-400 mb-1">{t('dashboard.cardStatus')}</p>
               <div className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${status.dot}`} />
                 <p className={`font-semibold ${status.color}`}>{status.label}</p>
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-400 mb-1">Membership</p>
+              <p className="text-xs text-slate-400 mb-1">{t('dashboard.cardMembership')}</p>
               <p className="font-semibold text-slate-800">{user.membership_type || 'Standard'}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-400 mb-1">Est. Expiry</p>
+              <p className="text-xs text-slate-400 mb-1">{t('dashboard.estExpiry')}</p>
               <p className="font-semibold text-slate-800">{estimatedExpiry(user)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-400 mb-1">Region</p>
+              <p className="text-xs text-slate-400 mb-1">{t('profile.region')}</p>
               <p className="font-semibold text-slate-800">{user.region || '—'}</p>
             </div>
           </div>
@@ -85,32 +87,32 @@ export default function DashboardPage({ navigateTo }) {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-lg text-slate-800 mb-6">Quick Actions</h3>
+          <h3 className="font-bold text-lg text-slate-800 mb-6">{t('dashboard.quickActions')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <QuickAction onClick={() => navigateTo('chat')} icon={<MessageSquare size={20} />} bg="bg-blue-50" text="text-[#3454D1]" title="Ask the Agent" sub="Check drug coverage" hoverBorder="hover:border-[#3454D1]" hoverBg="hover:bg-blue-50/50" />
-            <QuickAction onClick={() => navigateTo('facilities')} icon={<MapPin size={20} />} bg="bg-indigo-50" text="text-indigo-600" title="Find Facility" sub="Locate hospitals" hoverBorder="hover:border-indigo-400" hoverBg="hover:bg-indigo-50/50" />
-            <QuickAction onClick={() => navigateTo('resources')} icon={<AlertCircle size={20} />} bg="bg-emerald-50" text="text-emerald-600" title="Review Rights" sub="Resolve disputes" hoverBorder="hover:border-emerald-400" hoverBg="hover:bg-emerald-50/50" />
+            <QuickAction onClick={() => navigateTo('chat')} icon={<MessageSquare size={20} />} bg="bg-blue-50" text="text-[#3454D1]" title={t('dashboard.askAgentTitle')} sub={t('dashboard.askAgentSub')} hoverBorder="hover:border-[#3454D1]" hoverBg="hover:bg-blue-50/50" />
+            <QuickAction onClick={() => navigateTo('facilities')} icon={<MapPin size={20} />} bg="bg-indigo-50" text="text-indigo-600" title={t('dashboard.findFacilityTitle')} sub={t('dashboard.findFacilitySub')} hoverBorder="hover:border-indigo-400" hoverBg="hover:bg-indigo-50/50" />
+            <QuickAction onClick={() => navigateTo('resources')} icon={<AlertCircle size={20} />} bg="bg-emerald-50" text="text-emerald-600" title={t('dashboard.reviewRights')} sub={t('dashboard.reviewRightsSub')} hoverBorder="hover:border-emerald-400" hoverBg="hover:bg-emerald-50/50" />
           </div>
         </div>
 
         {/* Recent Conversations */}
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg text-slate-800">Recent Conversations</h3>
+            <h3 className="font-bold text-lg text-slate-800">{t('dashboard.recentConversations')}</h3>
             <span onClick={() => navigateTo('chat')} className="text-[#3454D1] text-sm font-semibold cursor-pointer flex items-center gap-1 hover:underline">
-              View all <ChevronRight size={14} />
+              {t('dashboard.viewAll')} <ChevronRight size={14} />
             </span>
           </div>
           {conversations.length === 0 ? (
-            <p className="text-sm text-slate-400 py-4">No conversations yet. Ask the agent something!</p>
+            <p className="text-sm text-slate-400 py-4">{t('dashboard.noConversations')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="text-slate-400 text-xs border-b border-slate-100">
-                    <th className="pb-3 font-medium w-1/2">Topic</th>
-                    <th className="pb-3 font-medium">Messages</th>
-                    <th className="pb-3 font-medium">Date</th>
+                    <th className="pb-3 font-medium w-1/2">{t('dashboard.topic')}</th>
+                    <th className="pb-3 font-medium">{t('dashboard.messages')}</th>
+                    <th className="pb-3 font-medium">{t('dashboard.date')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -118,7 +120,7 @@ export default function DashboardPage({ navigateTo }) {
                     <tr key={conv.id} onClick={() => navigateTo('chat')}
                       className="border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
                       <td className="py-4 px-2">
-                        <p className="font-semibold text-slate-800 mb-1 truncate max-w-[200px]">{conv.title || 'Untitled'}</p>
+                        <p className="font-semibold text-slate-800 mb-1 truncate max-w-[200px]">{conv.title || t('dashboard.untitled')}</p>
                       </td>
                       <td className="py-4 text-sm text-slate-600">{conv.message_count}</td>
                       <td className="py-4 text-sm text-slate-600">
@@ -137,15 +139,15 @@ export default function DashboardPage({ navigateTo }) {
       <div className="lg:col-span-1">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-lg text-slate-800">Latest Updates</h3>
+            <h3 className="font-bold text-lg text-slate-800">{t('dashboard.latestUpdates')}</h3>
             <span onClick={() => navigateTo('updates')} className="text-[#3454D1] text-sm font-semibold cursor-pointer flex items-center gap-1 hover:underline">
-              See all <ChevronRight size={14} />
+              {t('dashboard.seeAll')} <ChevronRight size={14} />
             </span>
           </div>
           <div className="flex flex-col gap-6 flex-grow">
             {updates.length > 0 && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Latest</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">{t('dashboard.latest')}</p>
                 <div className="relative pl-6 border-l-2 border-[#3454D1]">
                   <div className="absolute w-3 h-3 bg-white border-2 border-[#3454D1] rounded-full -left-[7.5px] top-1" />
                   <h4 className="font-bold text-slate-800 text-sm">{updates[0].title}</h4>
@@ -154,7 +156,7 @@ export default function DashboardPage({ navigateTo }) {
                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                       <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">{updates[0].summary}</p>
                       <div className="flex items-center gap-2 text-xs font-medium border-t border-slate-200 pt-3 mt-3">
-                        <p className="text-slate-400">Source</p>
+                        <p className="text-slate-400">{t('chat.source')}</p>
                         <p className="text-slate-800">{updates[0].source}</p>
                       </div>
                     </div>
@@ -164,7 +166,7 @@ export default function DashboardPage({ navigateTo }) {
             )}
             {updates.length > 1 && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Earlier</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">{t('dashboard.earlier')}</p>
                 <div className="flex flex-col gap-6">
                   {updates.slice(1).map(u => (
                     <div key={u.id} className="relative pl-6 border-l-2 border-slate-200">
@@ -179,7 +181,7 @@ export default function DashboardPage({ navigateTo }) {
           </div>
           <button onClick={() => navigateTo('updates')}
             className="w-full mt-6 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl transition-colors border border-slate-200 text-sm">
-            Go to Health Updates
+            {t('dashboard.goToUpdates')}
           </button>
         </div>
       </div>

@@ -36,6 +36,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)) -> TokenOut:
         region=payload.region,
         nhis_number=payload.nhis_number,
         membership_type=payload.membership_type,
+        language_preference=payload.language_preference or "en",
     )
     db.add(user)
     db.commit()
@@ -82,6 +83,8 @@ def update_me(
         user.nhis_number = payload.nhis_number
     if payload.membership_type is not None:
         user.membership_type = payload.membership_type
+    if payload.language_preference is not None:
+        user.language_preference = payload.language_preference
     db.add(user)
     db.commit()
     db.refresh(user)

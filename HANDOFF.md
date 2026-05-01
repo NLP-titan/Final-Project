@@ -4,17 +4,14 @@
 
 ---
 
-## Current State (as of 2026-04-29)
+## Current State (as of 2026-05-01)
 
 ### What exists
-- `backend/` — Complete FastAPI backend with RAG pipeline, agent orchestrator, auth, CRUD, rate limiting. **Do not change without strong reason.**
-- `frontend/` — Empty (only a README). **This is where the React frontend will live.**
-- `dummy.jsx` — Reference UI implementation. This is the visual/UX target. It currently calls Gemini directly (not the backend) and uses all mock data. The goal is to build a proper React app that matches this design but connects to the FastAPI backend.
-- `docs/NHIS Agent (1).md` — Full product and system design brief (8 pages, key user flows, architecture spec).
-- `docs/NHIS Agent.md` — Technical build checklist.
-- `CLAUDE.md` — Development reference (commands, architecture, env vars).
-- `description.md` — Plain-English project explainer.
-- `SESSION_LOG.md` — Running log of all sessions and changes.
+- `backend/` — FastAPI backend with RAG pipeline, agent orchestrator, auth, CRUD, rate limiting. **Now also includes:** `app/utils/vision.py`, `app/api/prescriptions_router.py`, `POST /api/medicines/identify`, `app/services/health_updates_scraper.py`, `scripts/geocode_facilities.py`, `scripts/refresh_health_updates.py`, env-driven prod hardening with `assert_production_safe()`, lightweight SQLite column migrations.
+- `frontend/` — React + Vite SPA. **Now also includes:** `pages/CoverageCheckPage.jsx` (prescription + drug photo upload), updated `FacilitiesPage.jsx` (uses real lat/lng), updated `UpdatesPage.jsx` (admin "Refresh from sources" button + `Read More` external links), `.env.example`.
+- `dummy.jsx` — Reference UI implementation. Visual target.
+- `docs/NHIS Agent (1).md`, `docs/NHIS Agent.md`, `CLAUDE.md`, `description.md`, `SESSION_LOG.md`, `README.md` (now comprehensive).
+- `docs/screenshots/` — Empty directory; user will populate.
 
 ### What has been decided
 - Frontend stack: **React + Vite + Tailwind CSS + lucide-react** (matches dummy.jsx).
@@ -28,9 +25,10 @@
 
 ## Open Questions
 
-All questions from the previous session have been answered and implemented. No open questions remain.
-
-All questions resolved in Session 2 — see SESSION_LOG.md for details.
+1. **Anthropic API key was previously committed in `backend/.env`.** Still tracked by git (`.env` is in `.gitignore` but was committed before that rule). **User must:** revoke the key, regenerate, run `git rm --cached backend/.env && git commit`. Optionally `git filter-repo` to scrub history before making the repo public.
+2. **Screenshot capture** — `docs/screenshots/` exists but is empty. README references 11 expected filenames (`01_landing.png` … `11_profile.png`). User needs to start both servers and capture them.
+3. **Production database choice** — currently SQLite. README documents the switch to Postgres but `DATABASE_URL` in `.env` is still SQLite.
+4. **GhanaWeb scraping is blocked** by their JS proof-of-work challenge wall and cannot be solved without a headless browser. The scraper detects the challenge page and skips. **MyJoyOnline Health RSS feed is used as the second source** — works cleanly, well-categorised by their CMS, gives 50 items per fetch.
 
 ---
 

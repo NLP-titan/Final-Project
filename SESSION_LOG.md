@@ -5,6 +5,76 @@ Each entry should include: date, what was done, key decisions made, and any bloc
 
 ---
 
+## 2026-05-01 — Session 3
+
+**What was done:**
+
+Production-hardening + 3 new features + comprehensive README.
+
+Backend:
+- Added `lat`/`lng` columns to `Facility` model; added `source_url` (UNIQUE) to `HealthUpdate`.
+- Added a tiny migration runner in `init_db.py` (`_apply_lightweight_migrations`) that ALTER-ADD-COLUMNs for SQLite — existing DBs auto-upgrade without manual intervention.
+- Added `app/utils/vision.py` — Claude vision helper that returns parsed JSON; `VisionUnavailable` / `VisionParseError` exceptions; supports image/* + application/pdf.
+- New `app/api/prescriptions_router.py` — `POST /api/prescriptions/analyze` (multipart). Vision extracts drugs + facility; passes through `medicines_db.search_medicine` + `facilities_db.search_facility` for coverage check.
+- Extended `app/api/medicines_router.py` with `POST /medicines/identify` (drug photo → Claude vision → coverage check).
+- New `app/services/health_updates_scraper.py` — scrapes ghs.gov.gh and ghanaweb.com health section. Idempotent persistence by `source_url`. New `POST /api/health-updates/refresh` admin endpoint.
+- New `scripts/geocode_facilities.py` — offline lookup table for ~50 Ghanaian towns + Nominatim fallback (1 req/sec, polite UA). Wired into `init_db` (offline pass only) so first startup auto-fills coords for known towns.
+- New `scripts/refresh_health_updates.py` — cron-friendly wrapper.
+- Production-safe config: `APP_ENV` knob, `assert_production_safe()` refuses to start in prod with default JWT/admin/CORS/SQLite; logs warnings in dev. Made retry helper, agent iteration cap, and history cap env-overridable.
+- Added `beautifulsoup4` + `lxml` to requirements.
+- Rewrote `.env.example` with prod warnings.
+
+Frontend:
+- New `pages/CoverageCheckPage.jsx` — single page with two modes (prescription, drug photo). File preview, status badges, structured result rendering.
+- Wired new "Coverage Check" tab into `DashboardLayout.jsx`.
+- Updated `FacilitiesPage.jsx`: improved map fallback message; shows count of mapped/unmapped facilities; uses scrollWheelZoom.
+- Updated `UpdatesPage.jsx`: admin-only "Refresh from sources" button; `Read More` external links via `source_url`.
+- New `api/prescriptions.js` (multipart upload helper).
+- Updated `api/client.js`: env-driven `VITE_API_BASE_URL` and `VITE_API_TIMEOUT_MS`; exports `API_BASE`.
+- Updated `vite.config.js`: env-driven proxy target and dev port.
+- New `frontend/.env.example`.
+
+Docs:
+- Comprehensive README rewrite with architecture diagram, screenshots table (`docs/screenshots/01_*.png` … `11_*.png`), config table, full API surface, going-live checklist, known limitations.
+
+**Validation:**
+- `python3 -m py_compile` clean across all new/modified backend files.
+- `npm run build` clean (493 KB gzipped 147 KB).
+
+**Key decisions:**
+- Combined prescription + drug-photo into one "Coverage Check" page (two modes) rather than two separate pages — fewer nav items, shared state machinery.
+- Health-update scraper uses string-heuristic HTML parsing (no LLM) — cheap, predictable, but fragile when sites redesign. Each source wrapped in try/except.
+- Geocoding: offline lookup runs on init for known towns (instant); Nominatim fallback only via explicit script (rate-limited, slow).
+- Did NOT run `git rm --cached backend/.env` — destructive enough to want explicit user approval; documented the steps in README and HANDOFF instead.
+
+**Status at end of session:**
+- All 6 user-requested deliverables complete.
+- Tests/builds pass.
+- Screenshots are still TODO (user task).
+- API key in committed `.env` still needs rotation (user task).
+
+**Hotfix (same session):**
+- First scraper run returned 0/0 items. Diagnosed: (a) GHS headlines live in `<h3>` inside `<article>` cards, not in `<a>` text — rewrote `scrape_ghs` to walk `<article>` blocks. (b) Ghanaweb gates behind a JS proof-of-work challenge ("Challenge Validation") — can't be solved without a headless browser. Replaced Ghanaweb with **MyJoyOnline Health RSS feed** (`/news/health/feed/`), parsed via stdlib `xml.etree.ElementTree`. `scrape_ghanaweb` kept as a hook with `_is_challenge_page` detection so it skips gracefully if the wall is ever lifted. Verified: GHS=8, MyJoy=8, Inserted=16 on a fresh DB.
+
+**Add-ons (same session):**
+- **Click-to-directions** on Facilities: list cards become anchor tags to `https://www.google.com/maps/dir/?api=1&destination=<lat>,<lng>` (or fallback search by name+town when coords missing). Map popups also include a "Get directions" link. Works on iOS/Android via Google Maps app deep-link.
+- **Multilingual support (English + Twi + Ga + Ewe) via Claude runtime translation:**
+  - Backend: `User.language_preference` column (en|tw|gaa|ee) with lightweight migration. `app/utils/translate.py` wraps Claude with an LRU cache. New `app/api/translation_router.py` exposes `POST /translate`, `POST /translate/batch`, `GET /translate/languages`. Conversations router translates the agent's final answer when user pref != "en".
+  - Frontend: `src/i18n/strings.js` is the single source of truth for translatable UI keys. `src/context/LanguageContext.jsx` batch-translates on language change and caches each language catalog in localStorage (auto-detects new keys and only translates those). `src/api/translation.js` wraps the endpoints. Language picker added to signup form (4 buttons with flags) and to Profile page (Globe-headed section). Replaced hard-coded strings in nav (DashboardLayout), Coverage Check, Facilities, Updates, and Chat welcome with `t(key)` calls. AuthLayout deliberately stays English since the picker is shown there.
+  - Smoke-test verified: Claude returns sensible Twi/Ga/Ewe for medical sentences, keeping drug names ("Paracetamol", "NHIS") unlocalised.
+- **Hotfix on translation context**: `LanguageProvider` now syncs `initialLanguage` prop changes (e.g. after login) into state so the catalog reloads when a user logs in to a different preference than the one in localStorage.
+
+**Late-session changes:**
+- **Click-to-directions** added to facility cards + map popups (Google Maps deep-links).
+- **Removed flag emojis** from the language picker — replaced with native-script labels ('English', 'Twi', 'Ga', 'Eʋegbe').
+- **Wired t() into all major pages** (Dashboard, Resources, Profile, Chat placeholder/header/sidebar, Coverage result rendering). New i18n keys added for ~70 additional strings.
+- **Tried + abandoned a static prebuild approach.** Wrote `scripts/prebuild_translations.py` that parsed `strings.js` and called Claude to write `tw.json` / `gaa.json` / `ee.json`. First run produced low-quality output (model treated some inputs as questions to answer instead of translating). Improved the translate prompt with explicit "do not answer, only translate" rules and a refusal/length sanitiser. Per user request, **deleted the prebuild script and JSON catalogs entirely** and reverted `LanguageContext` to runtime-only (single batch Claude call per language switch, cached in localStorage). The improved prompt + sanitiser still help at runtime.
+- **Login page background image** swapped from Unsplash URL to local `/dr.jpg` (file moved into `frontend/public/`).
+- **Live API smoke test passed** — backend boots, `/api/health` returns OK, `/api/translate/languages` lists all 4 languages, `/api/facilities` returns rows with populated `lat`/`lng` (48 of 60 have coords from offline geocoder).
+- **README rewritten with a comprehensive Feature Checklist** at the top covering all features shipped this session.
+
+---
+
 ## 2026-04-29 — Session 2
 
 **What was done:**

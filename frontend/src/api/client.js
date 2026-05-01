@@ -1,4 +1,10 @@
-const BASE = '/api'
+// Resolve the API base. In dev, we leave this as a relative path so the Vite
+// proxy can forward /api to the backend. In a production build, set
+// `VITE_API_BASE_URL=https://api.your-domain.com` and the absolute URL is used
+// — including for multipart uploads in api/prescriptions.js.
+const BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api'
+const REQUEST_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 60000)
+export const API_BASE = BASE
 
 function getToken() {
   return localStorage.getItem('nhis_token')
@@ -9,7 +15,7 @@ async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const timeout = options.timeout ?? 60000
+  const timeout = options.timeout ?? REQUEST_TIMEOUT_MS
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
 
@@ -17,7 +23,7 @@ async function request(path, options = {}) {
 
   let res
   try {
-    res = await fetch(`${BASE}${path}`, { ...fetchOptions, headers, signal: controller.signal })
+    res = await fetch(`${BASE}${path}`, { ...fetchOptions, headers, signal: controller.signal, credentials: 'include' })
   } catch (err) {
     if (err.name === 'AbortError') throw new Error('Request timed out. The server is taking too long — please try again.')
     throw err

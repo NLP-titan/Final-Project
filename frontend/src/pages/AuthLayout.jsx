@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { ShieldCheck, Eye, EyeOff, Globe } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { LANGUAGES } from '../i18n/strings.js'
 
 const regions = ["Greater Accra", "Ashanti", "Central", "Western", "Eastern", "Northern", "Volta", "Upper East", "Upper West", "Oti", "Bono", "Bono East", "Ahafo", "Savannah", "North East", "Western North"]
 
@@ -13,7 +14,7 @@ export default function AuthLayout({ currentPage, navigateTo }) {
         <div className="w-full md:w-1/2 flex flex-col min-h-[40vh] md:min-h-0 md:h-full border-r border-slate-100 shrink-0">
           <div
             className="h-[40vh] md:h-[55%] w-full bg-cover bg-center bg-no-repeat shrink-0"
-            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=1000&auto=format&fit=crop')" }}
+            style={{ backgroundImage: "url('/dr.jpg')" }}
           />
           <div className="flex-1 bg-[#3454D1] text-white p-8 md:p-12 lg:p-16 flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-8">
@@ -130,7 +131,7 @@ function LoginPanel({ navigateTo }) {
 
 function SignupPanel({ navigateTo }) {
   const { register } = useAuth()
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', region: 'Greater Accra', nhisNumber: '', membershipType: 'Standard', password: '' })
+  const [form, setForm] = useState({ fullName: '', email: '', phone: '', region: 'Greater Accra', nhisNumber: '', membershipType: 'Standard', password: '', language: 'en' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -149,6 +150,7 @@ function SignupPanel({ navigateTo }) {
         region: form.region || undefined,
         nhis_number: form.nhisNumber || undefined,
         membership_type: form.membershipType || undefined,
+        language_preference: form.language || 'en',
       })
       navigateTo('dashboard')
     } catch (err) {
@@ -201,6 +203,21 @@ function SignupPanel({ navigateTo }) {
               <option value="SSNIT">SSNIT</option>
               <option value="Indigent">Indigent</option>
             </select>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[13px] font-bold text-slate-800 flex items-center gap-1.5">
+            <Globe size={14} className="text-[#3454D1]" /> Preferred Language
+          </label>
+          <p className="text-[11px] text-slate-500 -mt-0.5">The agent will reply in this language and key labels will be translated.</p>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            {LANGUAGES.map(l => (
+              <button type="button" key={l.code}
+                onClick={() => setForm(f => ({ ...f, language: l.code }))}
+                className={`p-2.5 rounded-lg border text-sm font-semibold transition-all ${form.language === l.code ? 'bg-blue-50 border-[#3454D1] text-[#3454D1] ring-2 ring-[#3454D1]/20' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                {l.nativeLabel}
+              </button>
+            ))}
           </div>
         </div>
         <div className="flex flex-col gap-1.5">

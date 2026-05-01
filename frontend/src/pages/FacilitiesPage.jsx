@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Filter, Activity, MapPin, List, Map } from 'lucide-react'
+import { Search, Filter, Activity, MapPin, List, Map, Navigation } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { facilitiesApi } from '../api/facilities.js'
+import { useLanguage } from '../context/LanguageContext.jsx'
+
+// Build a Google Maps "directions to here" URL. Uses lat/lng when present —
+// works in any browser and deep-links into Google Maps app on iOS/Android.
+function directionsUrl(f) {
+  if (f.lat != null && f.lng != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lng}`
+  }
+  // Fall back to a search by name if no coordinates are available.
+  const query = encodeURIComponent([f.name, f.town, f.region, 'Ghana'].filter(Boolean).join(', '))
+  return `https://www.google.com/maps/search/?api=1&query=${query}`
+}
 
 // Fix Leaflet default marker icon
 delete L.Icon.Default.prototype._getIconUrl
@@ -19,6 +31,7 @@ const facilityTypes = ["All Types", "Hospital", "Clinic", "Pharmacy", "Diagnosti
 const GHANA_CENTRE = [7.9465, -1.0232]
 
 export default function FacilitiesPage() {
+  const { t } = useLanguage()
   const [allFacilities, setAllFacilities] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -48,17 +61,17 @@ export default function FacilitiesPage() {
     <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 min-h-[75vh] shadow-sm flex flex-col">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Accredited Facilities</h1>
-          <p className="text-slate-500 mt-1 text-sm">Find hospitals, clinics, and pharmacies that accept NHIS.</p>
+          <h1 className="text-2xl font-bold text-slate-800">{t('facilities.title')}</h1>
+          <p className="text-slate-500 mt-1 text-sm">{t('facilities.subtitle')}</p>
         </div>
         <div className="flex bg-slate-100 p-1 rounded-lg self-start md:self-end">
           <button onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${viewMode === 'list' ? 'bg-white text-[#3454D1] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-            <List size={16} /> List
+            <List size={16} /> {t('facilities.list')}
           </button>
           <button onClick={() => setViewMode('map')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors ${viewMode === 'map' ? 'bg-white text-[#3454D1] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-            <Map size={16} /> Map
+            <Map size={16} /> {t('facilities.map')}
           </button>
         </div>
       </div>
@@ -67,7 +80,7 @@ export default function FacilitiesPage() {
       <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
         <div className="flex-grow flex items-center border border-slate-200 rounded-lg px-3 py-2.5 bg-white focus-within:ring-2 focus-within:ring-[#3454D1]">
           <Search size={18} className="text-slate-400 mr-2 shrink-0" />
-          <input type="text" placeholder="Search by name, town or district..."
+          <input type="text" placeholder={t('facilities.searchPlaceholder')}
             className="w-full focus:outline-none bg-transparent text-slate-800 text-sm"
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
@@ -96,16 +109,19 @@ export default function FacilitiesPage() {
       ) : viewMode === 'list' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
           {filtered.map(facility => (
-            <div key={facility.id}
-              className="border border-slate-100 rounded-xl p-5 hover:shadow-md transition-all bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+            <a key={facility.id} href={directionsUrl(facility)} target="_blank" rel="noopener noreferrer"
+              className="border border-slate-100 rounded-xl p-5 hover:shadow-md hover:border-[#3454D1]/40 transition-all bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 group cursor-pointer no-underline">
               <div className="flex items-start gap-4">
                 <div className="mt-1 w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:bg-[#3454D1] group-hover:text-white transition-colors">
                   <MapPin size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">{facility.name}</h3>
+                  <h3 className="font-bold text-slate-800 group-hover:text-[#3454D1] transition-colors">{facility.name}</h3>
                   <p className="text-sm text-slate-500 mt-0.5">{facility.type}{facility.region ? ` • ${facility.region}` : ''}{facility.town ? ` • ${facility.town}` : ''}</p>
                   {facility.phone && <p className="text-xs text-slate-400 mt-1">{facility.phone}</p>}
+                  <span className="text-xs font-semibold text-[#3454D1] mt-2 inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Navigation size={12} /> {t('common.getDirections')}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 self-start sm:self-center">
@@ -113,50 +129,61 @@ export default function FacilitiesPage() {
                   {facility.accreditation_status || (facility.accredited ? 'Accredited' : 'Not Accredited')}
                 </span>
               </div>
-            </div>
+            </a>
           ))}
           {filtered.length === 0 && (
             <div className="col-span-full py-16 text-center text-slate-400 flex flex-col items-center">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                 <MapPin size={32} className="text-slate-300" />
               </div>
-              <p className="font-medium text-slate-600">No facilities found matching your criteria.</p>
+              <p className="font-medium text-slate-600">{t('facilities.noResults')}</p>
               <button onClick={() => { setSearchTerm(''); setSelectedRegion('All Regions'); setSelectedType('All Types') }}
                 className="mt-4 text-[#3454D1] text-sm font-semibold hover:underline">
-                Clear all filters
+                {t('facilities.clearFilters')}
               </button>
             </div>
           )}
         </div>
       ) : (
-        <div className="flex-grow rounded-xl overflow-hidden border border-slate-200 min-h-[400px]">
-          <MapContainer center={GHANA_CENTRE} zoom={7} style={{ height: '100%', width: '100%', minHeight: '400px' }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {mapFacilities.map(f => (
-              <Marker key={f.id} position={[f.lat, f.lng]}>
-                <Popup>
-                  <div className="font-sans">
-                    <p className="font-bold text-sm">{f.name}</p>
-                    <p className="text-xs text-slate-500 mt-1">{f.type} • {f.region}</p>
-                    {f.phone && <p className="text-xs mt-1">{f.phone}</p>}
-                    <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded ${f.accredited ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
-                      {f.accredited ? 'Accredited' : 'Not Accredited'}
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-          {mapFacilities.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="bg-white/90 px-6 py-4 rounded-xl shadow-sm text-center">
-                <p className="font-medium text-slate-600">No facilities with location data to display.</p>
+        <div className="flex-grow flex flex-col gap-3">
+          <div className="flex-grow rounded-xl overflow-hidden border border-slate-200 min-h-[450px] relative">
+            <MapContainer center={GHANA_CENTRE} zoom={7} style={{ height: '100%', width: '100%', minHeight: '450px' }} scrollWheelZoom>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {mapFacilities.map(f => (
+                <Marker key={f.id} position={[f.lat, f.lng]}>
+                  <Popup>
+                    <div className="font-sans">
+                      <p className="font-bold text-sm">{f.name}</p>
+                      <p className="text-xs text-slate-500 mt-1">{f.type}{f.region ? ` • ${f.region}` : ''}{f.town ? ` • ${f.town}` : ''}</p>
+                      {f.phone && <p className="text-xs mt-1">{f.phone}</p>}
+                      <span className={`inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded ${f.accredited ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
+                        {f.accreditation_status || (f.accredited ? 'Accredited' : 'Not Accredited')}
+                      </span>
+                      <a href={directionsUrl(f)} target="_blank" rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#3454D1] hover:underline">
+                        <Navigation size={12} /> {t('common.getDirections')}
+                      </a>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+            {mapFacilities.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
+                <div className="bg-white/95 px-6 py-4 rounded-xl shadow-md text-center max-w-sm pointer-events-auto">
+                  <p className="font-medium text-slate-700">No mapped facilities match your filters.</p>
+                  <p className="text-xs text-slate-500 mt-1">Try clearing the region/type filters, or run the geocoding script to backfill coordinates.</p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <p className="text-xs text-slate-400 text-center">
+            Showing {mapFacilities.length} of {filtered.length} matching facilities on the map.
+            {filtered.length - mapFacilities.length > 0 && ` ${filtered.length - mapFacilities.length} have no coordinates yet.`}
+          </p>
         </div>
       )}
     </div>

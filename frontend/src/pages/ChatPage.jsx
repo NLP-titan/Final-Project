@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Menu, X, Send, MessageSquare, FileText, Plus, Trash2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { conversationsApi } from '../api/conversations.js'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 function extractSource(toolCalls) {
   if (!toolCalls || toolCalls.length === 0) return null
@@ -23,14 +24,21 @@ function extractSource(toolCalls) {
   return 'NHIS Policy Knowledge Base'
 }
 
-const WELCOME = {
-  role: 'assistant',
-  content: 'Hello. I am the NHIS Rights & Entitlement Agent. I can help you check drug coverage, find facilities, or understand your rights as a patient. What do you need help with?',
-  tool_calls: [],
-  suggestions: ['Is dialysis covered under NHIS?', 'Find an accredited hospital near me', 'They charged me for Paracetamol. Is that right?'],
-}
-
 export default function ChatPage() {
+  const { t } = useLanguage()
+
+  // Welcome bubble + starter suggestions, recomputed when language changes.
+  const WELCOME = {
+    role: 'assistant',
+    content: t('chat.welcome'),
+    tool_calls: [],
+    suggestions: [
+      t('chat.suggestion1'),
+      t('chat.suggestion2'),
+      t('chat.suggestion3'),
+    ],
+  }
+
   const [conversations, setConversations] = useState([])
   const [activeConvId, setActiveConvId] = useState(null)
   const [messages, setMessages] = useState([WELCOME])
@@ -110,7 +118,7 @@ export default function ChatPage() {
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'I am currently unable to reach the server. Please check that the backend is running, or contact NHIS directly on 0800-900-9900.',
+        content: t('chat.unreachable'),
         tool_calls: [],
       }])
     } finally {
@@ -131,17 +139,17 @@ export default function ChatPage() {
       {/* Sidebar */}
       <div className={`absolute md:relative z-30 w-64 h-full bg-slate-50 border-r border-slate-100 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="font-bold text-slate-800">History</h3>
+          <h3 className="font-bold text-slate-800">{t('chat.history')}</h3>
           <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400 hover:text-slate-800"><X size={20} /></button>
         </div>
         <div className="p-3">
           <button onClick={startNewChat}
             className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-[#3454D1] py-2 rounded-lg font-semibold text-sm hover:bg-blue-50 transition-colors shadow-sm mb-4">
-            <Plus size={16} /> New Chat
+            <Plus size={16} /> {t('chat.newChat')}
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-4">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Recent</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">{t('chat.recent')}</p>
           <div className="flex flex-col gap-1">
             {conversations.map(conv => (
               <div key={conv.id}
@@ -149,7 +157,7 @@ export default function ChatPage() {
                 className={`px-3 py-2.5 rounded-lg hover:bg-slate-200 cursor-pointer transition-colors group flex items-center justify-between ${activeConvId === conv.id ? 'bg-blue-50' : ''}`}>
                 <div className="overflow-hidden">
                   <p className={`text-sm font-semibold truncate group-hover:text-[#3454D1] ${activeConvId === conv.id ? 'text-[#3454D1]' : 'text-slate-700'}`}>
-                    {conv.title || 'Untitled'}
+                    {conv.title || t('chat.untitled')}
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
                     {new Date(conv.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
@@ -175,10 +183,10 @@ export default function ChatPage() {
             <MessageSquare size={20} className="text-[#3454D1]" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-800 text-base md:text-lg">NHIS Policy Agent</h2>
+            <h2 className="font-bold text-slate-800 text-base md:text-lg">{t('chat.policyAgent')}</h2>
             <p className="text-[11px] md:text-xs text-emerald-600 font-medium flex items-center gap-1.5 mt-0.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
-              Grounded in Official Policy
+              {t('chat.grounded')}
             </p>
           </div>
         </div>
@@ -187,7 +195,7 @@ export default function ChatPage() {
         <div className="flex-grow overflow-y-auto p-4 md:p-6 flex flex-col gap-6 bg-slate-50/30">
           {convLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-slate-400 text-sm">Loading conversation...</div>
+              <div className="text-slate-400 text-sm">{t('chat.loadingConv')}</div>
             </div>
           ) : (
             messages.map((msg, i) => (
@@ -222,7 +230,7 @@ export default function ChatPage() {
                   return src ? (
                     <div className="mt-2 text-[11px] md:text-xs font-medium text-slate-500 flex items-center gap-1 ml-1 bg-white border border-slate-100 px-2.5 py-1 rounded-md shadow-sm">
                       <FileText size={12} className="text-[#3454D1]" />
-                      Source: {src}
+                      {t('chat.source')}: {src}
                     </div>
                   ) : null
                 })()}
@@ -249,7 +257,7 @@ export default function ChatPage() {
                   <span className="w-1.5 h-1.5 bg-[#3454D1] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                   <span className="w-1.5 h-1.5 bg-[#3454D1] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
-                Searching knowledge base...
+                {t('chat.searching')}
               </div>
             </div>
           )}
@@ -260,7 +268,7 @@ export default function ChatPage() {
         <div className="border-t border-slate-200 p-4 bg-white shrink-0">
           <form onSubmit={handleSubmit} className="flex gap-3">
             <input type="text" value={input} onChange={e => setInput(e.target.value)}
-              placeholder="Type your question about NHIS policy..."
+              placeholder={t('chat.placeholder2')}
               className="flex-grow border border-slate-200 rounded-xl p-3.5 focus:outline-none focus:ring-2 focus:ring-[#3454D1] focus:border-transparent text-slate-800 text-sm shadow-sm"
               disabled={loading} />
             <button type="submit" disabled={loading || !input.trim()}

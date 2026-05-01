@@ -27,6 +27,7 @@ from app.auth.dependencies import get_current_user, get_optional_user
 from app.db.base import get_db
 from app.db.models import Conversation, Message, User
 from app.middleware.rate_limit import chat_rate_limit_dependency
+from app.utils.translate import TranslationUnavailable, translate
 
 
 router = APIRouter(tags=["chat"])
@@ -202,10 +203,22 @@ def post_message(
     history = [{"role": m.role, "content": m.content} for m in conv.messages]
     response = agent_answer(payload.content, history=history)
 
+    # If the user prefers a Ghanaian language, translate the agent's final
+    # answer via Claude before persisting. Tool reasoning stays in English so
+    # the source-attribution UI keeps working. Falls back to the original
+    # text on any error.
+    answer_text = response.answer
+    target_lang = (user.language_preference or "en").lower()
+    if target_lang != "en" and answer_text:
+        try:
+            answer_text = translate(answer_text, target_lang)
+        except TranslationUnavailable:
+            pass  # no key configured; persist English
+
     asst_msg = Message(
         conversation_id=conv.id,
         role="assistant",
-        content=response.answer,
+        content=answer_text,
         provider=response.provider,
     )
     asst_msg.set_tool_calls(response.tool_calls)

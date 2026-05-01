@@ -7,4 +7,5 @@ export const healthUpdatesApi = {
     params.set('limit', limit)
     return api.get(`/health-updates?${params}`)
   },
+  refresh: () => api.post('/health-updates/refresh'),
 }

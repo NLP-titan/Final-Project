@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import require_admin
 from app.db.base import get_db
 from app.db.models import HealthUpdate
+from app.services.health_updates_scraper import refresh_all
 
 
 router = APIRouter(prefix="/health-updates", tags=["health-updates"])
@@ -21,6 +22,7 @@ class HealthUpdateOut(BaseModel):
     id: int
     title: str
     source: Optional[str] = None
+    source_url: Optional[str] = None
     category: Optional[str] = None
     summary: Optional[str] = None
     published_date: Optional[str] = None
@@ -30,16 +32,18 @@ class HealthUpdateOut(BaseModel):
 
 
 class HealthUpdateCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
+    title: str = Field(min_length=1, max_length=512)
     source: Optional[str] = Field(default=None, max_length=128)
+    source_url: Optional[str] = Field(default=None, max_length=1024)
     category: Optional[str] = Field(default=None, max_length=64)
     summary: Optional[str] = None
     published_date: Optional[str] = Field(default=None, max_length=32)
 
 
 class HealthUpdateUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, max_length=255)
+    title: Optional[str] = Field(default=None, max_length=512)
     source: Optional[str] = Field(default=None, max_length=128)
+    source_url: Optional[str] = Field(default=None, max_length=1024)
     category: Optional[str] = Field(default=None, max_length=64)
     summary: Optional[str] = None
     published_date: Optional[str] = Field(default=None, max_length=32)
@@ -114,3 +118,18 @@ def delete_update(update_id: int, db: Session = Depends(get_db)) -> Response:
     db.delete(row)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class RefreshOut(BaseModel):
+    ghs_found: int
+    myjoy_found: int = 0
+    ghanaweb_found: int = 0
+    inserted: int
+
+
+@router.post("/refresh", response_model=RefreshOut, dependencies=[Depends(require_admin)])
+def refresh_updates(limit_per_source: int = Query(default=10, ge=1, le=30)) -> RefreshOut:
+    """Scrape Ghana Health Service and GhanaWeb Health for new posts.
+    Idempotent — items already known by `source_url` are skipped."""
+    result = refresh_all(limit_per_source=limit_per_source)
+    return RefreshOut(**result)

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import { LanguageProvider } from './context/LanguageContext.jsx'
 import AuthLayout from './pages/AuthLayout.jsx'
 import DashboardLayout from './pages/DashboardLayout.jsx'
 
@@ -24,10 +25,23 @@ function Router() {
   return <DashboardLayout currentPage={currentPage} navigateTo={navigateTo} />
 }
 
+// Pulls the language preference straight from the logged-in user, so the
+// catalog matches what the backend will translate agent answers into.
+function LanguageBridge({ children }) {
+  const { user } = useAuth()
+  return (
+    <LanguageProvider initialLanguage={user?.language_preference || 'en'}>
+      {children}
+    </LanguageProvider>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <Router />
+      <LanguageBridge>
+        <Router />
+      </LanguageBridge>
     </AuthProvider>
   )
 }

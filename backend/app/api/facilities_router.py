@@ -28,6 +28,8 @@ class FacilityOut(BaseModel):
     accreditation_status: Optional[str] = None
     services: Optional[str] = None
     phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     created_at: dt.datetime
     updated_at: dt.datetime
 
@@ -44,6 +46,8 @@ class FacilityCreate(BaseModel):
     accreditation_status: Optional[str] = Field(default=None, max_length=64)
     services: Optional[str] = Field(default=None, max_length=512)
     phone: Optional[str] = Field(default=None, max_length=64)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class FacilityUpdate(BaseModel):
@@ -56,6 +60,8 @@ class FacilityUpdate(BaseModel):
     accreditation_status: Optional[str] = Field(default=None, max_length=64)
     services: Optional[str] = Field(default=None, max_length=512)
     phone: Optional[str] = Field(default=None, max_length=64)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 @router.get("", response_model=list[FacilityOut])
